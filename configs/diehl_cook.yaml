@@ -1,0 +1,53 @@
+# Diehl & Cook (2015) STDP baseline configuration
+
+# Experiment settings
+experiment_name: "diehl_cook_mnist"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder
+encoder: "diehl_cook"
+encoder_config:
+  input_dim: 784
+  n_neurons: 400  # Excitatory neurons
+  simulation_time: 350  # ms
+  dt: 1.0  # ms
+  
+  # LIF neuron parameters
+  thresh: -52.0  # mV
+  rest: -65.0  # mV
+  refrac: 5  # ms
+  
+  # STDP parameters
+  nu: [1.0e-4, 1.0e-2]  # Learning rates [pre, post]
+  
+  # Training
+  n_train_samples: null  # null = use all training samples
+
+# Feature extraction
+binarization_method: "top_k_percent"
+binarization_params:
+  percent: 0.05  # 5% sparsity
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: false
+n_clusters: 10
+
+# Clustering settings
+clustering_methods:
+  - kmeans
+  - kmedoids
+  - spectral
+
+# Hardware
+device: "cuda"  # BindsNET benefits from GPU
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true

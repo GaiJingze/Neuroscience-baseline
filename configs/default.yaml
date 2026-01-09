@@ -1,0 +1,48 @@
+# Default configuration for clustering/hashing pipeline
+
+# Experiment settings
+experiment_name: "baseline_experiment"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "mnist"  # Options: mnist, fashion_mnist, sift1m, glove
+data_root: "./data"
+
+# Encoder (will be overridden by specific baseline configs)
+encoder: "dummy"
+encoder_config:
+  input_dim: 784
+  code_dim: 128
+
+# Feature extraction
+binarization_method: "top_k_percent"  # Options: top_k, top_k_percent, threshold, wta
+binarization_params:
+  percent: 0.05  # For top_k_percent
+  k: 20  # For top_k
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: false
+n_clusters: 10  # For MNIST/Fashion-MNIST
+
+# Clustering settings
+clustering_methods:
+  - kmeans
+  - kmedoids
+  - spectral
+
+# Retrieval settings (for SIFT1M)
+retrieval_k_values:
+  - 10
+  - 50
+  - 100
+
+# Hardware
+device: "cuda"  # Options: cuda, cpu
+num_workers: 4
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true

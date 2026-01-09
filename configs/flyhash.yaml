@@ -1,0 +1,44 @@
+# FlyHash baseline configuration
+
+# Experiment settings
+experiment_name: "flyhash_mnist"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder
+encoder: "flyhash"
+encoder_config:
+  input_dim: 784
+  projection_dim: 2000  # ~2.5x expansion
+  hash_length: 100  # 5% of projection_dim
+  sampling_ratio: 0.1  # 10% connection probability
+  use_package: false  # Set to true if FlyHash PyPI package is installed
+
+# Feature extraction
+binarization_method: "none"  # FlyHash does its own binarization
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: false
+n_clusters: 10
+
+# Clustering settings
+# Note: kmedoids and spectral are very slow on large datasets (10k+ samples)
+# For quick testing, use only kmeans (~1-2 min)
+# For complete evaluation, uncomment other methods (~15-30 min total)
+clustering_methods:
+  - kmeans           # Fast: ~1-2 min on MNIST
+  # - kmedoids       # Slow: ~5-10 min on MNIST (O(n²) complexity)
+  # - spectral       # Very slow: ~10-20 min on MNIST (O(n³) complexity)
+
+# Hardware
+device: "cpu"  # FlyHash typically runs on CPU
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true

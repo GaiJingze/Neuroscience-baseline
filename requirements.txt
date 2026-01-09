@@ -1,0 +1,44 @@
+# Core dependencies
+numpy>=1.21.0,<2.0.0  # BindsNET requires NumPy 1.x
+scipy>=1.7.0
+scikit-learn>=1.0.0
+scikit-learn-extra>=0.2.0
+matplotlib>=3.4.0
+seaborn>=0.11.0
+pyyaml>=5.4.0
+
+# Deep learning
+torch>=1.10.0,<2.3.0  # PyTorch (compatible with BindsNET)
+torchvision>=0.11.0
+
+# SNN frameworks (Spiking Neural Networks)
+# BindsNET: PyTorch-based SNN framework for Diehl & Cook baseline
+# Installing from GitHub for better PyTorch 2.x compatibility
+# git+https://github.com/BindsNET/bindsnet.git
+
+# Note: PyPI version (0.2.7) has torch._six incompatibility with PyTorch 2.x
+# GitHub version has fixes for modern PyTorch
+# If GitHub install fails, use: pip install bindsnet==0.2.7 with PyTorch 1.13.x
+
+# Alternative SNN frameworks (optional):
+# spikingjelly  # Another popular SNN framework
+# norse  # Norse SNN framework
+
+# Optional: Fast similarity search
+# faiss-cpu>=1.7.0
+# faiss-gpu>=1.7.0
+
+# Optional: FlyHash package
+# FlyHash>=0.1.0
+
+# Optional: Experiment tracking
+# wandb>=0.12.0
+
+# Notebook support
+jupyter>=1.0.0
+ipython>=7.0.0
+
+# Development
+pytest>=6.0.0
+black>=21.0
+flake8>=3.9.0
