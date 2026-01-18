@@ -10,6 +10,7 @@ import torch
 import numpy as np
 from pathlib import Path
 import sys
+from tqdm import tqdm
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -147,19 +148,36 @@ def train_network(network, train_data, train_labels, n_epochs=1, time=350, devic
     for epoch in range(n_epochs):
         print(f"\nEpoch {epoch+1}/{n_epochs}")
         
-        for i, (image, label) in enumerate(zip(train_data, train_labels)):
-            if (i + 1) % 100 == 0:
-                print(f"  Sample {i+1}/{n_samples} (label={label})")
+        # Create progress bar
+        pbar = tqdm(
+            zip(train_data, train_labels),
+            total=n_samples,
+            desc=f"Training",
+            unit="sample",
+            ncols=100,
+            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
+        )
+        
+        for i, (image, label) in enumerate(pbar):
+            # Update progress bar with current label
+            pbar.set_postfix({'label': label, 'progress': f'{(i+1)/n_samples*100:.1f}%'})
             
             # Ensure image is in [0, 1] range
             image = torch.from_numpy(image).float()
             if image.max() > 1.0:
                 image = image / 255.0
             
+            # Move image to device
+            image = image.to(device)
+            
             # Encode as Poisson spike train
             # Note: This is a simplified encoding
             # Real implementation would generate spike trains
             encoded = poisson(datum=image, time=int(time), dt=network.dt)
+            
+            # Ensure encoded data is on the correct device
+            if isinstance(encoded, torch.Tensor):
+                encoded = encoded.to(device)
             
             # Clamp input and run simulation
             inputs = {"Input": encoded}
@@ -168,7 +186,8 @@ def train_network(network, train_data, train_labels, n_epochs=1, time=350, devic
             # Reset network state
             network.reset_state_variables()
         
-        print(f"Epoch {epoch+1} complete!")
+        pbar.close()
+        print(f"✅ Epoch {epoch+1} complete!")
     
     return network
 
@@ -195,17 +214,34 @@ def extract_spike_counts(network, test_data, time=350, device="cpu"):
     
     print(f"Extracting spike counts from {n_samples} samples...")
     
-    for i, image in enumerate(test_data):
-        if (i + 1) % 100 == 0:
-            print(f"  Sample {i+1}/{n_samples}")
+    # Create progress bar
+    pbar = tqdm(
+        enumerate(test_data),
+        total=n_samples,
+        desc="Extracting",
+        unit="sample",
+        ncols=100,
+        bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
+    )
+    
+    for i, image in pbar:
+        # Update progress bar
+        pbar.set_postfix({'progress': f'{(i+1)/n_samples*100:.1f}%'})
         
         # Prepare image
         image = torch.from_numpy(image).float()
         if image.max() > 1.0:
             image = image / 255.0
         
+        # Move image to device
+        image = image.to(device)
+        
         # Encode
         encoded = poisson(datum=image, time=int(time), dt=network.dt)
+        
+        # Ensure encoded data is on the correct device
+        if isinstance(encoded, torch.Tensor):
+            encoded = encoded.to(device)
         
         # Run simulation
         inputs = {"Input": encoded}
@@ -217,6 +253,9 @@ def extract_spike_counts(network, test_data, time=350, device="cpu"):
         
         # Reset
         network.reset_state_variables()
+    
+    pbar.close()
+    print("✅ Extraction complete!")
     
     return spike_counts
 

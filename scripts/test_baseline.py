@@ -37,13 +37,18 @@ AVAILABLE_BASELINES = {
         'requires_training': True,
         'gpu_required': True,
     },
-    # Add more baselines here as they're implemented
-    # 'softhebb': {
-    #     'config': 'configs/softhebb.yaml',
-    #     'description': 'SoftHebb - Soft Hebbian learning',
-    #     'requires_training': True,
-    #     'gpu_required': True,
-    # },
+    'softhebb': {
+        'config': 'configs/softhebb.yaml',
+        'description': 'SoftHebb - Soft Hebbian learning',
+        'requires_training': True,
+        'gpu_required': False,  # Works on CPU, but GPU recommended
+    },
+    'flyhash_sift1m': {
+        'config': 'configs/flyhash_sift1m.yaml',
+        'description': 'FlyHash on SIFT-1M dataset',
+        'requires_training': False,
+        'gpu_required': False,
+    },
 }
 
 

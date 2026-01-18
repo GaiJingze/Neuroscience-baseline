@@ -1,0 +1,52 @@
+# FlyHash baseline configuration for SIFT-1M dataset
+# SIFT-1M: 128-dimensional SIFT descriptors from 1M images
+
+# Experiment settings
+experiment_name: "flyhash_sift1m"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "sift1m"
+data_root: "./data"
+
+# Dataset-specific settings
+dataset_config:
+  subset_size: 10000  # Use 10K subset for clustering (full 1M is too large)
+  # For full dataset, set to null or remove this line
+
+# Encoder
+encoder: "flyhash"
+encoder_config:
+  input_dim: 128  # SIFT descriptor dimension
+  projection_dim: 640  # 5x expansion (128 * 5)
+  hash_length: 32  # 5% of projection_dim
+  sampling_ratio: 0.1  # 10% connection probability
+  use_package: false  # Use manual implementation
+
+# Feature extraction
+binarization_method: "none"  # FlyHash does its own binarization
+
+# Evaluation
+eval_clustering: true  # Cluster base vectors (subset)
+eval_retrieval: false  # TODO: Implement retrieval evaluation
+n_clusters: 100  # SIFT1M has many visual categories
+
+# Clustering settings
+# Note: Use only kmeans for large datasets
+clustering_methods:
+  - kmeans  # Fast enough for 10K samples
+
+# Hardware
+device: "cpu"  # FlyHash works well on CPU
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true
+
+# Notes:
+# - SIFT-1M is primarily for retrieval/ANN evaluation
+# - We use clustering on a subset (10K) for validation
+# - For retrieval evaluation, use eval_retrieval: true (when implemented)
+# - Full 1M vectors requires ~500MB memory for features

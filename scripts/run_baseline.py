@@ -29,6 +29,7 @@ from pipeline.binarization import top_k_binarization, top_k_percent_binarization
 from baselines.base_encoder import DummyEncoder
 from baselines.flyhash.encoder import FlyHashEncoder
 from baselines.diehl_cook.encoder import DiehlCookEncoder
+from baselines.softhebb.encoder import SoftHebbEncoder
 
 
 def get_encoder(name: str, config: dict):
@@ -39,6 +40,8 @@ def get_encoder(name: str, config: dict):
         return FlyHashEncoder(config)
     elif name == 'diehl_cook':
         return DiehlCookEncoder(config)
+    elif name == 'softhebb':
+        return SoftHebbEncoder(config)
     # Add more encoders here
     else:
         raise ValueError(f"Unknown encoder: {name}")
@@ -73,9 +76,14 @@ def main(args):
     
     # Load dataset
     logger.log("\n[1/5] Loading dataset...")
+    
+    # Extract dataset-specific config
+    dataset_config = config.get('dataset_config', {})
+    
     dataset = load_dataset(
         name=config['dataset'],
-        root=config['data_root']
+        root=config.get('data_root', './data'),
+        **dataset_config
     )
     logger.log(f"  Train samples: {len(dataset['train_data'])}")
     logger.log(f"  Test samples: {len(dataset['test_data'])}")
@@ -198,7 +206,9 @@ def main(args):
                 logger.log(f"      {metric_name}: {value:.4f}")
     
     # Save results
-    results_file = output_dir / 'results' / f"{config['experiment_name']}_seed{config['seed']}.json"
+    # Use encoder_dataset format for consistency, instead of experiment_name
+    result_filename = f"{config['encoder']}_{config['dataset']}_seed{config['seed']}.json"
+    results_file = output_dir / 'results' / result_filename
     save_results(results, str(results_file))
     logger.log(f"\nResults saved to {results_file}")
     
@@ -219,6 +229,24 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=None, help='Random seed (overrides config)')
     parser.add_argument('--dataset', type=str, default=None, help='Dataset name (overrides config)')
     parser.add_argument('--force', action='store_true', help='Force re-encoding (ignore cached codes)')
+    parser.add_argument('--no-cache', action='store_true', help='Disable caching (always re-encode)')
+    parser.add_argument('--clear-cache', action='store_true', help='Clear cache for this baseline before running')
     
     args = parser.parse_args()
+    
+    # Handle cache clearing
+    if args.clear_cache:
+        import shutil
+        with open(args.config, 'r') as f:
+            config_temp = yaml.safe_load(f)
+        cache_dir = Path(config_temp.get('output_dir', './outputs')) / 'codes' / config_temp['encoder']
+        if cache_dir.exists():
+            print(f"Clearing cache directory: {cache_dir}")
+            shutil.rmtree(cache_dir)
+            print("✅ Cache cleared")
+    
+    # Set force flag if no-cache is enabled
+    if args.no_cache:
+        args.force = True
+    
     main(args)
