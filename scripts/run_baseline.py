@@ -42,6 +42,9 @@ def get_encoder(name: str, config: dict):
         return DiehlCookEncoder(config)
     elif name == 'softhebb':
         return SoftHebbEncoder(config)
+    elif name == 'krotov':
+        from baselines.krotov import KrotovEncoder
+        return KrotovEncoder(config)
     # Add more encoders here
     else:
         raise ValueError(f"Unknown encoder: {name}")

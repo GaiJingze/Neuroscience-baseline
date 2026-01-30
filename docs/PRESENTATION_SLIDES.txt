@@ -1,0 +1,138 @@
+================================================================================
+                   BIOLOGICAL LEARNING FOR CLUSTERING
+                              Slide Deck
+================================================================================
+
+SLIDE 1: TITLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+                Biological Learning for Unsupervised Clustering
+
+                   A Comparison of Bio-Inspired Hashing Methods
+
+
+
+
+================================================================================
+
+SLIDE 2: PIPELINE OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pipeline Overview
+
+• Unified evaluation framework for bio-inspired clustering algorithms
+
+• Standardized evaluation on vision datasets  
+
+• Efficient unsupervised feature learning
+
+• Comprehensive metrics: NMI, ARI, Accuracy
+
+
+Workflow:
+
+    Dataset  →  Encoder  →  Features  →  Clustering  →  Evaluation
+                (Train)    (Extract)     (K-means)     (Metrics)
+
+
+================================================================================
+
+SLIDE 3: DATASETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Datasets
+
+
+MNIST
+
+  • 60,000 training + 10,000 test samples
+  • Handwritten digits (0-9), 28×28 grayscale images
+  • Classic benchmark for unsupervised learning
+
+
+Fashion-MNIST
+
+  • 60,000 training + 10,000 test samples
+  • Fashion items (10 categories), 28×28 grayscale images
+  • More complex visual patterns than MNIST
+
+
+Data Preprocessing: Normalized to [0,1], flattened to 784D vectors
+
+
+================================================================================
+
+SLIDE 4: BASELINES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Biologically-Inspired Baselines
+
+
+1. FlyHash
+   • Inspired by Drosophila olfactory system
+   • Random projection, no training required
+   • Performance: NMI = 0.55 (MNIST)
+
+
+2. Krotov-Hopfield ⭐ (Best Performance)
+   • Competing hidden units with anti-Hebbian learning
+   • Training: 200 epochs (~15 minutes)
+   • Performance: NMI = 0.58 (MNIST)
+
+
+3. SoftHebb
+   • Soft winner-take-all with Hebbian plasticity
+   • Training: 10 epochs (~10 minutes)
+   • Performance: NMI = 0.18 (MNIST), 0.41 (Fashion-MNIST)
+
+
+4. Diehl & Cook (STDP-SNN)
+   • Spiking neural networks with spike-timing-dependent plasticity
+   • Currently under debugging
+
+
+================================================================================
+
+SLIDE 5: RESULTS & CONCLUSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Performance Comparison (MNIST)
+
+
+Method          NMI      ARI      ACC      Training Time
+────────────────────────────────────────────────────────────
+Krotov ⭐       0.5837   0.4683   0.6313   ~15 minutes
+FlyHash         0.5494   0.4089   0.5748   instant
+SoftHebb        0.1806   0.0878   0.2094   ~10 minutes
+
+
+Key Findings:
+
+  ✓ Learned features outperform random projection (+6.2% on NMI)
+  
+  ✓ Krotov-Hopfield achieves best clustering with efficient training
+  
+  ✓ Bio-inspired learning is both effective and practical for
+    unsupervised clustering tasks
+
+
+================================================================================
+                              END OF SLIDES
+================================================================================
+
+
+USAGE NOTES:
+───────────────────────────────────────────────────────────────────────────
+
+1. For Marp (Markdown Slides):
+   Use CLUSTERING_PIPELINE_SLIDES.md with Marp CLI or VS Code extension
+
+2. For PowerPoint:
+   Copy content from each slide section into PowerPoint slides
+
+3. For LaTeX Beamer:
+   Convert to LaTeX beamer format with appropriate \frame{} commands
+
+4. For Google Slides / Keynote:
+   Import as plain text and format with appropriate themes

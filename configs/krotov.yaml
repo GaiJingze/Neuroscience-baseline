@@ -1,0 +1,61 @@
+# Krotov-Hopfield Configuration
+# Paper: "Unsupervised Learning by Competing Hidden Units"
+# Krotov & Hopfield (2019), PNAS
+# https://doi.org/10.1073/pnas.1820458116
+
+experiment_name: "krotov_mnist"
+
+# Dataset
+dataset: "mnist"  # mnist, fashion_mnist
+data_root: "./data"
+
+# Encoder configuration
+encoder: "krotov"
+encoder_config:
+  input_dim: 784  # 28x28 for MNIST
+  
+  # Network architecture
+  n_neurons: 400  # Number of hidden units (same as other baselines)
+  
+  # Training hyperparameters
+  n_epochs: 200   # Number of training epochs (as in original paper)
+  batch_size: 100 # Minibatch size
+  lr: 0.02        # Initial learning rate (linearly annealed)
+  
+  # Krotov-specific parameters
+  delta: 0.4      # Anti-Hebbian strength (winner: +1, k-th: -delta)
+  p: 2.0          # Lebesgue norm for weight regularization
+  k: 2            # Ranking parameter (k-WTA, must be >= 2)
+  
+  # Weight initialization
+  init_mu: 0.0    # Mean of Gaussian initialization
+  init_sigma: 1.0 # Std of Gaussian initialization
+  
+  # Numerical precision
+  prec: 1.0e-30   # Threshold for weight update normalization
+  
+  # Verbosity
+  verbose: true
+
+# Binarization (applied after encoding)
+binarization_method: "none"  # Already binarized in encode()
+binarization_params: {}
+
+# Evaluation configuration
+eval_clustering: true
+eval_retrieval: false  # Not applicable for MNIST
+
+# Clustering parameters
+n_clusters: 10  # Number of clusters (MNIST has 10 classes)
+clustering_methods: ["kmeans", "kmedoids", "spectral"]
+
+# Retrieval parameters (if applicable)
+retrieval_k_values: [10, 50, 100]
+
+# Output
+output_dir: "./outputs"
+save_codes: true
+save_model: true
+
+# Reproducibility
+seed: 0
