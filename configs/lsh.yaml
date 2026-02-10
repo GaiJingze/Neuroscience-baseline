@@ -1,0 +1,34 @@
+# LSH/SimHash Configuration
+# Locality-Sensitive Hashing using random hyperplanes
+
+experiment_name: "lsh_mnist"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder configuration
+encoder: "lsh"
+encoder_config:
+  input_dim: 784
+  hash_dim: 128            # Number of hash bits
+  verbose: true
+
+# Binarization (done internally via sign)
+binarization_method: "none"
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: true
+n_clusters: 10
+
+clustering_methods:
+  - kmeans
+
+retrieval_k_values: [1, 10, 50, 100]
+
+# Output
+output_dir: "./outputs"
+save_codes: true
+save_model: true
+seed: 0

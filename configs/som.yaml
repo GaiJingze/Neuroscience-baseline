@@ -1,0 +1,42 @@
+# SOM (Self-Organizing Map) Configuration
+# Kohonen network - bio-inspired competitive learning
+
+experiment_name: "som_mnist"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder configuration
+encoder: "som"
+encoder_config:
+  input_dim: 784
+  map_height: 20           # SOM grid height
+  map_width: 20            # SOM grid width (total 400 neurons)
+  n_epochs: 10             # Training epochs
+  lr_init: 0.5             # Initial learning rate
+  lr_final: 0.01           # Final learning rate
+  sigma_init: null         # Initial neighborhood radius (auto: max_dim/2)
+  sigma_final: 1.0         # Final neighborhood radius
+  batch_size: 1            # SOM typically uses single-sample updates
+  k_active: 20             # Top-k active neurons (~5% of 400)
+  verbose: true
+
+# Binarization (done internally)
+binarization_method: "none"
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: true
+n_clusters: 10
+
+clustering_methods:
+  - kmeans
+
+retrieval_k_values: [1, 10, 50, 100]
+
+# Output
+output_dir: "./outputs"
+save_codes: true
+save_model: true
+seed: 0

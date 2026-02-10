@@ -23,7 +23,7 @@ binarization_method: "none"  # FlyHash does its own binarization
 
 # Evaluation
 eval_clustering: true
-eval_retrieval: false
+eval_retrieval: true
 n_clusters: 10
 
 # Clustering settings
@@ -31,12 +31,12 @@ n_clusters: 10
 # For quick testing, use only kmeans (~1-2 min)
 # For complete evaluation, uncomment other methods (~15-30 min total)
 clustering_methods:
-  - kmeans           # Fast: ~1-2 min on MNIST
-  # - kmedoids       # Slow: ~5-10 min on MNIST (O(n²) complexity)
-  # - spectral       # Very slow: ~10-20 min on MNIST (O(n³) complexity)
+  - kmeans
+
+retrieval_k_values: [1, 10, 50, 100]
 
 # Hardware
-device: "cpu"  # FlyHash typically runs on CPU
+device: "cpu"
 
 # Logging
 verbose: true

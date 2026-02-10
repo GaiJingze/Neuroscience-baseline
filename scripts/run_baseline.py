@@ -4,7 +4,7 @@ Run a single baseline encoder and evaluate on clustering/retrieval tasks.
 
 Usage:
     python scripts/run_baseline.py --config configs/flyhash.yaml
-    python scripts/run_baseline.py --config configs/diehl_cook.yaml --seed 1
+    python scripts/run_baseline.py --config configs/biohash.yaml --seed 1
 """
 
 import argparse
@@ -28,26 +28,126 @@ from pipeline import (
 from pipeline.binarization import top_k_binarization, top_k_percent_binarization
 from baselines.base_encoder import DummyEncoder
 from baselines.flyhash.encoder import FlyHashEncoder
-from baselines.diehl_cook.encoder import DiehlCookEncoder
 from baselines.softhebb.encoder import SoftHebbEncoder
+from baselines.krotov.encoder import KrotovEncoder
+from baselines.biohash.encoder import BioHashEncoder
+from baselines.wta_hash.encoder import WTAHashEncoder
+from baselines.som.encoder import SOMEncoder
+from baselines.lsh.encoder import SimHashEncoder
+
+# Diehl & Cook (optional, requires BindsNET)
+try:
+    from baselines.diehl_cook.encoder import DiehlCookEncoder
+    DIEHL_COOK_AVAILABLE = True
+except ImportError:
+    DIEHL_COOK_AVAILABLE = False
+    DiehlCookEncoder = None
 
 
 def get_encoder(name: str, config: dict):
     """Get encoder instance by name."""
-    if name == 'dummy':
-        return DummyEncoder(config)
-    elif name == 'flyhash':
-        return FlyHashEncoder(config)
-    elif name == 'diehl_cook':
-        return DiehlCookEncoder(config)
-    elif name == 'softhebb':
-        return SoftHebbEncoder(config)
-    elif name == 'krotov':
-        from baselines.krotov import KrotovEncoder
-        return KrotovEncoder(config)
-    # Add more encoders here
+    encoders = {
+        'dummy': DummyEncoder,
+        'flyhash': FlyHashEncoder,
+        'softhebb': SoftHebbEncoder,
+        'krotov': KrotovEncoder,
+        'biohash': BioHashEncoder,
+        'wta_hash': WTAHashEncoder,
+        'som': SOMEncoder,
+        'lsh': SimHashEncoder,
+    }
+    # Add Diehl & Cook if available
+    if DIEHL_COOK_AVAILABLE and DiehlCookEncoder is not None:
+        encoders['diehl_cook'] = DiehlCookEncoder
+    
+    if name not in encoders:
+        available = list(encoders.keys())
+        if not DIEHL_COOK_AVAILABLE:
+            available.append('diehl_cook (requires BindsNET)')
+        raise ValueError(f"Unknown encoder: {name}. Available: {available}")
+    return encoders[name](config)
+
+
+def preprocess_data(data: np.ndarray, dataset_name: str, encoder_name: str) -> np.ndarray:
+    """
+    Preprocess data based on dataset and encoder requirements.
+
+    - GloVe vectors contain negative values.
+    - Krotov can handle negatives (via sign * |W|^(p-1)) but benefits from normalization.
+    - SoftHebb uses ReLU which clips negatives — needs [0, 1] normalization.
+    - For other encoders, GloVe is L2-normalized.
+
+    Args:
+        data: Raw data array [n_samples, dim]
+        dataset_name: Name of the dataset
+        encoder_name: Name of the encoder
+
+    Returns:
+        Preprocessed data array
+    """
+    if dataset_name != 'glove':
+        return data
+
+    # GloVe-specific normalization
+    if encoder_name == 'softhebb':
+        # MinMax normalization to [0, 1] per feature (SoftHebb uses ReLU)
+        feat_min = data.min(axis=0, keepdims=True)
+        feat_max = data.max(axis=0, keepdims=True)
+        denom = feat_max - feat_min
+        denom[denom == 0] = 1
+        data = (data - feat_min) / denom
+        print(f"  [Preprocess] GloVe MinMax normalized to [0, 1] for SoftHebb")
+
+    elif encoder_name == 'krotov':
+        # L2 normalize + shift to non-negative for Krotov
+        norms = np.linalg.norm(data, axis=1, keepdims=True)
+        norms[norms == 0] = 1
+        data = data / norms
+        # Shift to [0, 1]: (x + 1) / 2 since L2-normalized cosine range is [-1, 1]
+        data = (data + 1.0) / 2.0
+        print(f"  [Preprocess] GloVe L2-normalized + shifted to [0,1] for Krotov")
+
     else:
-        raise ValueError(f"Unknown encoder: {name}")
+        # Default: L2 normalization for other encoders
+        norms = np.linalg.norm(data, axis=1, keepdims=True)
+        norms[norms == 0] = 1
+        data = data / norms
+        print(f"  [Preprocess] GloVe L2-normalized")
+
+    return data.astype(np.float32)
+
+
+def build_label_groundtruth(query_labels: np.ndarray, db_labels: np.ndarray,
+                            k: int = 100) -> np.ndarray:
+    """
+    Build retrieval ground truth based on label matching.
+
+    For each query, the relevant documents are those in the database with the same label.
+    We randomly sample up to k relevant items per query.
+
+    Args:
+        query_labels: Labels for query samples
+        db_labels: Labels for database samples
+        k: Maximum number of ground truth neighbors per query
+
+    Returns:
+        [n_queries, k] array of ground truth indices
+    """
+    n_queries = len(query_labels)
+    groundtruth = np.zeros((n_queries, k), dtype=np.int32)
+
+    for i in range(n_queries):
+        # Find all database items with the same label
+        same_label_idx = np.where(db_labels == query_labels[i])[0]
+        if len(same_label_idx) > k:
+            same_label_idx = np.random.choice(same_label_idx, k, replace=False)
+        elif len(same_label_idx) < k:
+            # Pad with the available indices (repeat if necessary)
+            padding = np.random.choice(same_label_idx, k - len(same_label_idx), replace=True)
+            same_label_idx = np.concatenate([same_label_idx, padding])
+        groundtruth[i] = same_label_idx
+
+    return groundtruth
 
 
 def main(args):
@@ -80,9 +180,7 @@ def main(args):
     # Load dataset
     logger.log("\n[1/5] Loading dataset...")
     
-    # Extract dataset-specific config
     dataset_config = config.get('dataset_config', {})
-    
     dataset = load_dataset(
         name=config['dataset'],
         root=config.get('data_root', './data'),
@@ -90,6 +188,28 @@ def main(args):
     )
     logger.log(f"  Train samples: {len(dataset['train_data'])}")
     logger.log(f"  Test samples: {len(dataset['test_data'])}")
+
+    # ---- Preprocessing (GloVe normalization for Krotov / SoftHebb) ----
+    dataset_name = config['dataset'].lower()
+    encoder_name = config['encoder'].lower()
+
+    dataset['train_data'] = preprocess_data(dataset['train_data'], dataset_name, encoder_name)
+    dataset['test_data'] = preprocess_data(dataset['test_data'], dataset_name, encoder_name)
+    if dataset.get('query_data') is not None:
+        dataset['query_data'] = preprocess_data(dataset['query_data'], dataset_name, encoder_name)
+
+    # ---- Auto-detect evaluation modes ----
+    has_labels = dataset.get('test_labels') is not None
+    has_query_data = dataset.get('query_data') is not None
+    has_groundtruth = dataset.get('groundtruth') is not None
+
+    # Clustering: only if labels exist
+    do_clustering = has_labels and config.get('eval_clustering', True)
+    # Retrieval: always attempt (build groundtruth from labels if needed)
+    do_retrieval = config.get('eval_retrieval', True)
+
+    logger.log(f"\n  Eval modes: clustering={do_clustering}, retrieval={do_retrieval}")
+    logger.log(f"  Has labels: {has_labels}, Has query_data: {has_query_data}, Has groundtruth: {has_groundtruth}")
     
     # Initialize encoder
     logger.log("\n[2/5] Initializing encoder...")
@@ -109,7 +229,6 @@ def main(args):
     # Encode test data
     logger.log("\n[4/5] Encoding test data...")
     
-    # Define output paths
     codes_dir = output_dir / 'codes' / config['encoder'] / config['dataset']
     codes_dir.mkdir(parents=True, exist_ok=True)
     
@@ -146,7 +265,7 @@ def main(args):
     logger.log(f"  Code shape: {code.shape}")
     logger.log(f"  Code sparsity: {1 - np.mean(code):.3f}")
     
-    # Evaluate
+    # ========== Evaluation ==========
     logger.log("\n[5/5] Evaluating...")
     results = {
         'config': config,
@@ -161,44 +280,63 @@ def main(args):
         }
     }
     
-    # Clustering evaluation
-    if config.get('eval_clustering', False):
-        logger.log("\n  Running clustering evaluation...")
+    # ---- Clustering evaluation (only if labels available) ----
+    if do_clustering:
+        logger.log("\n  Running clustering evaluation (ACC / NMI)...")
         
-        if dataset.get('test_labels') is None:
-            logger.log("    Warning: No labels available, skipping clustering evaluation")
-        else:
-            clustering_results = run_clustering_evaluation(
-                codes=code,
-                labels_true=dataset['test_labels'],
-                n_clusters=config['n_clusters'],
-                methods=config.get('clustering_methods', ['kmeans']),
-                is_binary=True,
-                verbose=False
-            )
-            results['clustering'] = clustering_results
-            
-            logger.log("    Clustering results:")
-            for method, metrics in clustering_results.items():
-                logger.log(f"      {method}:")
-                logger.log(f"        NMI={metrics['nmi']:.4f}, ARI={metrics['ari']:.4f}, ACC={metrics['acc']:.4f}")
+        clustering_results = run_clustering_evaluation(
+            codes=code,
+            labels_true=dataset['test_labels'],
+            n_clusters=config.get('n_clusters', 10),
+            methods=config.get('clustering_methods', ['kmeans']),
+            is_binary=True,
+            verbose=False
+        )
+        results['clustering'] = clustering_results
+        
+        logger.log("    Clustering results:")
+        for method, metrics in clustering_results.items():
+            logger.log(f"      {method}:")
+            logger.log(f"        NMI={metrics['nmi']:.4f}, ARI={metrics['ari']:.4f}, ACC={metrics['acc']:.4f}")
     
-    # Retrieval evaluation
-    if config.get('eval_retrieval', False):
-        logger.log("\n  Running retrieval evaluation...")
-        
-        if dataset.get('query_data') is None:
-            logger.log("    Warning: No query data available, skipping retrieval evaluation")
-        else:
-            # Encode query data
+    # ---- Retrieval evaluation ----
+    if do_retrieval:
+        logger.log("\n  Running retrieval evaluation (mAP / Recall@K)...")
+
+        k_values = config.get('retrieval_k_values', [1, 10, 50, 100])
+
+        if has_query_data and has_groundtruth:
+            # Explicit query data + groundtruth (SIFT1M, GloVe)
+            logger.log("    Mode: explicit query_data + groundtruth")
             query_encoded = encoder.encode(dataset['query_data'])
             query_code = query_encoded['code']
-            
+            database_code = code
+            groundtruth = dataset['groundtruth']
+
+        elif has_labels:
+            # Label-based retrieval (MNIST, Fashion-MNIST)
+            # Database = encoded train_data, Queries = encoded test_data
+            logger.log("    Mode: label-based retrieval (database=train, queries=test)")
+            logger.log("    Encoding train_data as retrieval database...")
+            train_encoded = encoder.encode(dataset['train_data'])
+            database_code = train_encoded['code']
+            query_code = code  # test_data already encoded
+            # Build groundtruth from labels
+            groundtruth = build_label_groundtruth(
+                dataset['test_labels'], dataset['train_labels'],
+                k=max(k_values)
+            )
+
+        else:
+            logger.log("    Warning: No query/groundtruth data and no labels. Skipping retrieval.")
+            do_retrieval = False
+
+        if do_retrieval:
             retrieval_results = run_retrieval_evaluation(
                 query_codes=query_code,
-                database_codes=code,
-                groundtruth=dataset['groundtruth'],
-                k_values=config.get('retrieval_k_values', [10, 50, 100]),
+                database_codes=database_code,
+                groundtruth=groundtruth,
+                k_values=k_values,
                 metric='hamming',
                 verbose=False
             )
@@ -209,7 +347,6 @@ def main(args):
                 logger.log(f"      {metric_name}: {value:.4f}")
     
     # Save results
-    # Use encoder_dataset format for consistency, instead of experiment_name
     result_filename = f"{config['encoder']}_{config['dataset']}_seed{config['seed']}.json"
     results_file = output_dir / 'results' / result_filename
     save_results(results, str(results_file))

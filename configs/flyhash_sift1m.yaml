@@ -28,14 +28,10 @@ encoder_config:
 binarization_method: "none"  # FlyHash does its own binarization
 
 # Evaluation
-eval_clustering: true  # Cluster base vectors (subset)
-eval_retrieval: false  # TODO: Implement retrieval evaluation
-n_clusters: 100  # SIFT1M has many visual categories
+eval_clustering: false  # No labels for SIFT1M
+eval_retrieval: true    # Retrieval is the primary task
 
-# Clustering settings
-# Note: Use only kmeans for large datasets
-clustering_methods:
-  - kmeans  # Fast enough for 10K samples
+retrieval_k_values: [1, 10, 50, 100]
 
 # Hardware
 device: "cpu"  # FlyHash works well on CPU

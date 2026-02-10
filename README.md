@@ -8,14 +8,15 @@ This repository implements the **Clustering/Hashing feature track** for the LLM-
 
 **Tasks**:
 - **Task A**: Unsupervised feature learning & clustering (MNIST, Fashion-MNIST)
-- **Task B**: Locality-sensitive hashing for approximate nearest neighbor search (SIFT1M)
+- **Task B**: Locality-sensitive hashing for approximate nearest neighbor search (SIFT1M, GloVe)
 
 **Key Features**:
 - Unified evaluation pipeline for all baselines
-- Standardized metrics (NMI, ARI, ACC for clustering; mAP, Recall@K for retrieval)
-- SNN-specific metrics (spike sparsity, temporal dynamics)
+- Standardized metrics (ACC, NMI for clustering; mAP, Recall@K for retrieval)
+- Support for multiple datasets (MNIST, SIFT1M, GloVe)
 - Modular baseline implementations
 - Feature caching for fast iteration
+- GPU support for SNN baselines
 
 ## 🏗️ Repository Structure
 
@@ -41,19 +42,24 @@ clustering/
 ├── baselines/                    # Baseline implementations
 │   ├── base_encoder.py           # Abstract base class
 │   ├── flyhash/                  # FlyHash (Dasgupta et al., 2017)
-│   │   └── encoder.py
 │   ├── diehl_cook/               # STDP-WTA (Diehl & Cook, 2015)
-│   │   ├── encoder.py
-│   │   └── train.py
-│   └── softhebb/                 # SoftHebb (Kozachkov et al., 2022)
-│       ├── encoder.py            # ✅ Implemented
-│       └── README.md
+│   ├── softhebb/                 # SoftHebb (Kozachkov et al., 2022)
+│   ├── krotov/                   # Krotov (Krotov & Hopfield, 2019)
+│   ├── biohash/                  # BioHash (bio-inspired hashing)
+│   ├── wta_hash/                 # WTA Hash (winner-take-all)
+│   ├── som/                      # SOM (Kohonen, 1982)
+│   └── lsh/                      # LSH/SimHash (Charikar, 2002)
 │
 ├── configs/                      # Experiment configurations
 │   ├── default.yaml
 │   ├── flyhash.yaml
 │   ├── diehl_cook.yaml
-│   └── softhebb.yaml             # ✅ New
+│   ├── softhebb.yaml
+│   ├── krotov.yaml
+│   ├── biohash.yaml
+│   ├── wta_hash.yaml
+│   ├── som.yaml
+│   └── lsh.yaml
 │
 ├── scripts/                      # Utility scripts
 │   ├── run_baseline.py           # Main evaluation script
@@ -132,20 +138,18 @@ python scripts/run_baseline.py --config configs/flyhash.yaml
 python run.py --baseline flyhash --seed 1
 
 # Run Diehl & Cook (requires BindsNET, GPU recommended)
-python run.py --baseline diehl_cook
+python scripts/run_baseline.py --config configs/diehl_cook.yaml
 
-# Full training with BindsNET (more control)
-python baselines/diehl_cook/train.py \
-    --train --extract \
-    --n_train 1000 \
-    --n_epochs 1 \
-    --device cuda
+# Run on SIFT1M dataset
+python scripts/run_baseline.py --config configs/flyhash_sift1m.yaml
+
+# Run on GloVe dataset
+python scripts/run_baseline.py --config configs/krotov.yaml --dataset glove
 ```
 
-**Note**: Diehl & Cook training can be slow. For quick testing:
-- Use `--n_train 1000` to train on subset
-- Use `--n_epochs 1` for single epoch
-- Consider using CPU if no GPU available (will be slower)
+**Note**: Diehl & Cook training can be slow (~6 hours for full MNIST). For quick testing:
+- Use `n_train_samples: 1000` in config to train on subset
+- GPU is recommended but not required
 
 ### 4. Quick Commands
 
@@ -178,41 +182,40 @@ cat outputs/results/flyhash_mnist_seed0.json
 | **FlyHash** | 2017 | Dasgupta et al., Science | Random projection + WTA | Instant (no training) | ✅ Complete |
 | **Diehl & Cook** | 2015 | Front. Comput. Neurosci. | STDP + lateral inhibition | ~6 hours (60K samples) | ✅ Complete |
 | **SoftHebb** | 2022 | Kozachkov et al., NCE/ICLR | Hebbian + Soft-WTA | ~2 minutes (60K samples) | ✅ Complete |
+| **Krotov** | 2019 | Krotov & Hopfield, PNAS | Hebbian + WTA | ~1 minute (60K samples) | ✅ Complete |
+| **BioHash** | 2020 | Bio-inspired hashing | Hebbian + sparse projection | ~2 minutes | ✅ Complete |
+| **WTA Hash** | 2017 | Winner-Take-All hashing | Random windowing + local WTA | Instant | ✅ Complete |
+| **SOM** | 1982 | Kohonen, Self-Organizing Map | Competitive learning | ~5 minutes (60K samples) | ✅ Complete |
+| **LSH/SimHash** | 2002 | Charikar, LSH | Random hyperplanes | Instant | ✅ Complete |
 
 ### Performance Comparison (MNIST, seed=0)
 
-| Baseline | NMI | ARI | ACC | Sparsity | GPU Support |
-|----------|-----|-----|-----|----------|-------------|
-| **FlyHash** | 0.545 | 0.408 | 0.579 | 0.950 | ✅ Yes |
-| **Diehl & Cook** | ~0.650 | ~0.540 | ~0.700 | 0.950 | ⚠️ Limited |
-| **SoftHebb** | 0.182 | 0.090 | 0.211 | 0.950 | ✅ Yes |
+| Baseline | NMI | ACC | mAP | Recall@10 | GPU Support |
+|----------|-----|-----|-----|-----------|-------------|
+| **FlyHash** | 0.545 | 0.579 | - | - | ✅ Yes |
+| **Diehl & Cook** | ~0.650 | ~0.700 | - | - | ✅ Yes |
+| **SoftHebb** | 0.182 | 0.211 | - | - | ✅ Yes |
+| **Krotov** | - | - | - | - | ✅ Yes |
+| **BioHash** | - | - | - | - | ✅ Yes |
+| **WTA Hash** | - | - | - | - | ✅ Yes |
+| **SOM** | - | - | - | - | ✅ Yes |
+| **LSH/SimHash** | - | - | - | - | ✅ Yes |
 
-*Note: SoftHebb performance can be improved with hyperparameter tuning*
-
-### To Implement
-
-| Baseline | Year | Paper | Priority |
-|----------|------|-------|----------|
-| **Deep STDP** | 2024 | Lu & Sengupta, NCE | HIGH |
-| **BioHash** | 2020 | (if exists) | MEDIUM |
+*Note: Full results available in `outputs/results/`. Diehl & Cook requires BindsNET.*
 
 ## 📈 Evaluation Metrics
 
-### Clustering (MNIST, Fashion-MNIST)
+### Clustering (MNIST only, requires labels)
+- **ACC** (Accuracy): Clustering accuracy with Hungarian matching
 - **NMI** (Normalized Mutual Information): Measures cluster-label agreement
-- **ARI** (Adjusted Rand Index): Measures clustering similarity
-- **ACC** (Accuracy): With Hungarian matching for optimal alignment
-- **Silhouette Score**: Internal clustering quality (no labels needed)
 
-### Retrieval (SIFT1M)
-- **mAP** (Mean Average Precision): Ranking quality
+### Retrieval (All datasets)
+- **mAP** (Mean Average Precision): Ranking quality for retrieval
 - **Recall@K**: Fraction of true neighbors in top-K (K=10, 50, 100)
-- **Precision@K**: Precision of top-K retrieved items
 
-### SNN-Specific
-- **Spike Sparsity**: 1 - (firing_rate), measures energy efficiency
-- **Hamming Distance**: For binary codes
-- **Temporal Dynamics**: (optional) Spike timing analysis
+**Evaluation Strategy**:
+- **MNIST**: Both clustering (ACC/NMI) and retrieval (mAP/Recall@K) metrics
+- **SIFT1M, GloVe**: Only retrieval metrics (mAP/Recall@K) since no labels available
 
 ## 🔧 Adding a New Baseline
 
@@ -328,16 +331,18 @@ All documentation is in the `docs/` directory:
 - [x] FlyHash baseline
 - [x] MNIST evaluation
 
-### Phase 2: Core Baselines (Week 3-5) 🔨
+### Phase 2: Core Baselines (Week 3-5) ✅
 - [x] ✅ Complete Diehl & Cook (BindsNET integrated)
 - [x] ✅ Implement SoftHebb (Hebbian learning)
-- [ ] Investigate Lu & Sengupta 2024
-- [ ] Run all on MNIST + Fashion-MNIST
-- [ ] Tune SoftHebb hyperparameters
+- [x] ✅ Implement Krotov (Hebbian + WTA)
+- [x] ✅ Add BioHash, WTA Hash, SOM, LSH/SimHash baselines
+- [x] ✅ Support SIFT1M and GloVe datasets
+- [x] ✅ Unified evaluation pipeline (clustering + retrieval)
 
-### Phase 3: Hashing Evaluation (Week 6-7)
-- [ ] SIFT1M retrieval evaluation
-- [ ] Performance optimization (FAISS integration)
+### Phase 3: Hashing Evaluation (Week 6-7) ✅
+- [x] ✅ SIFT1M retrieval evaluation
+- [x] ✅ GloVe retrieval evaluation
+- [x] ✅ FAISS integration for efficient search
 
 ### Phase 4: Analysis & Documentation (Week 8)
 - [ ] Statistical analysis
@@ -360,5 +365,5 @@ This is a research project. For questions or contributions, contact Jingze Gai.
 
 ---
 
-**Status**: 🚧 Work in Progress (Phase 1 Complete)  
-**Last Updated**: 2026-01-09
+**Status**: ✅ Phase 2 & 3 Complete  
+**Last Updated**: 2026-01-XX

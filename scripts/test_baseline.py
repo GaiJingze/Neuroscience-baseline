@@ -31,17 +31,47 @@ AVAILABLE_BASELINES = {
         'requires_training': False,
         'gpu_required': False,
     },
-    'diehl_cook': {
-        'config': 'configs/diehl_cook.yaml',
-        'description': 'Diehl & Cook - STDP learning',
-        'requires_training': True,
-        'gpu_required': True,
-    },
     'softhebb': {
         'config': 'configs/softhebb.yaml',
         'description': 'SoftHebb - Soft Hebbian learning',
         'requires_training': True,
-        'gpu_required': False,  # Works on CPU, but GPU recommended
+        'gpu_required': False,
+    },
+    'krotov': {
+        'config': 'configs/krotov.yaml',
+        'description': 'Krotov-Hopfield - Competing hidden units',
+        'requires_training': True,
+        'gpu_required': False,
+    },
+    'biohash': {
+        'config': 'configs/biohash.yaml',
+        'description': 'BioHash - Hebbian-learned sparse projections',
+        'requires_training': True,
+        'gpu_required': False,
+    },
+    'wta_hash': {
+        'config': 'configs/wta_hash.yaml',
+        'description': 'WTA Hash - Winner-Take-All hashing',
+        'requires_training': False,
+        'gpu_required': False,
+    },
+    'som': {
+        'config': 'configs/som.yaml',
+        'description': 'SOM - Self-Organizing Map (Kohonen)',
+        'requires_training': True,
+        'gpu_required': False,
+    },
+    'lsh': {
+        'config': 'configs/lsh.yaml',
+        'description': 'LSH/SimHash - Random hyperplane hashing',
+        'requires_training': False,
+        'gpu_required': False,
+    },
+    'diehl_cook': {
+        'config': 'configs/diehl_cook.yaml',
+        'description': 'Diehl & Cook - STDP-based SNN (requires BindsNET)',
+        'requires_training': True,
+        'gpu_required': False,  # Optional, but recommended
     },
     'flyhash_sift1m': {
         'config': 'configs/flyhash_sift1m.yaml',

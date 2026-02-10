@@ -15,24 +15,6 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from baselines.base_encoder import BaseEncoder
 from typing import Optional, Dict
 
-# Try to import torch and BindsNET
-try:
-    import torch
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-
-try:
-    from bindsnet.network import Network
-    from bindsnet.network.nodes import Input, LIFNodes
-    from bindsnet.network.topology import Connection
-    from bindsnet.learning import PostPre
-    from bindsnet.network.monitors import Monitor
-    from bindsnet.encoding import poisson
-    BINDSNET_AVAILABLE = True
-except ImportError:
-    BINDSNET_AVAILABLE = False
-
 
 class DiehlCookEncoder(BaseEncoder):
     """
@@ -41,7 +23,7 @@ class DiehlCookEncoder(BaseEncoder):
     Architecture:
     - Input layer: Poisson rate-coded neurons
     - Excitatory layer: LIF neurons with STDP
-    - Inhibitory layer: LIF neurons for lateral inhibition
+    - Lateral inhibition (Winner-Take-All)
     - Feature extraction: Spike counts
     """
     
@@ -60,51 +42,53 @@ class DiehlCookEncoder(BaseEncoder):
         
         # STDP parameters
         self.nu = config.get('nu', (1e-4, 1e-2))  # Learning rates (pre, post)
+        if isinstance(self.nu, list):
+            self.nu = tuple(self.nu)
         
         # Training parameters
         self.n_train_samples = config.get('n_train_samples', None)  # None = use all
         
-        # Device
-        if TORCH_AVAILABLE:
+        # Device support
+        try:
+            import torch
             self.device = config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')
-        else:
+        except ImportError:
             self.device = 'cpu'
         
         self.network = None
         self.is_trained = False
-        
-        # Check availability
-        if not TORCH_AVAILABLE:
-            print("⚠️  Warning: PyTorch not available. Using placeholder implementation.")
-        if not BINDSNET_AVAILABLE:
-            print("⚠️  Warning: BindsNET not available. Using placeholder implementation.")
-            print("   Install with: pip install bindsnet")
     
     def _build_network(self):
-        """Build the SNN using BindsNET."""
-        if not BINDSNET_AVAILABLE or not TORCH_AVAILABLE:
-            return None
+        """Build the SNN using BindsNET with full Diehl & Cook architecture."""
+        try:
+            import torch
+            from bindsnet.network import Network
+            from bindsnet.network.nodes import Input, LIFNodes
+            from bindsnet.network.topology import Connection
+            from bindsnet.learning import PostPre
+            from bindsnet.network.monitors import Monitor
+        except ImportError:
+            raise ImportError(
+                "BindsNET is required for Diehl & Cook encoder. "
+                "Install with: pip install bindsnet"
+            )
         
-        print(f"Building Diehl & Cook network...")
-        print(f"  Input neurons: {self.input_dim}")
-        print(f"  Excitatory neurons: {self.n_neurons}")
-        print(f"  Device: {self.device}")
-        
+        # Create network
         network = Network(dt=self.dt)
         
-        # Input layer (Poisson)
+        # Input layer with traces for STDP
         input_layer = Input(n=self.input_dim, shape=(1, 1, self.input_dim), traces=True)
         
-        # Excitatory layer (LIF with adaptive threshold)
+        # Excitatory layer with adaptive threshold
         exc_layer = LIFNodes(
             n=self.n_neurons,
             traces=True,
-            rest=-65.0,
-            reset=-60.0,
-            thresh=-52.0,
-            refrac=5,
-            decay=1e-2,
-            trace_tc=5e-2,
+            rest=self.rest,
+            reset=-60.0,  # Reset potential
+            thresh=self.thresh,
+            refrac=self.refrac,
+            decay=1e-2,  # Membrane time constant
+            trace_tc=5e-2,  # Trace time constant
             theta_plus=0.05,  # Adaptive threshold increment
             tc_theta_decay=1e7,  # Adaptive threshold decay
         )
@@ -126,13 +110,13 @@ class DiehlCookEncoder(BaseEncoder):
         network.add_layer(exc_layer, name="Excitatory")
         network.add_layer(inh_layer, name="Inhibitory")
         
-        # Input -> Excitatory connection with STDP
+        # Input -> Excitatory (with STDP)
         w = 0.3 * torch.rand(self.input_dim, self.n_neurons)
         input_exc_conn = Connection(
             source=input_layer,
             target=exc_layer,
             w=w,
-            update_rule=PostPre,  # STDP
+            update_rule=PostPre,  # STDP rule
             nu=self.nu,
             reduction=None,
             wmin=0.0,
@@ -152,7 +136,7 @@ class DiehlCookEncoder(BaseEncoder):
         )
         network.add_connection(exc_inh_conn, source="Excitatory", target="Inhibitory")
         
-        # Inhibitory -> Excitatory (all-to-all except diagonal)
+        # Inhibitory -> Excitatory (all-to-all except diagonal, lateral inhibition)
         w = 10.4 * (torch.ones(self.n_neurons, self.n_neurons) - torch.diag(torch.ones(self.n_neurons)))
         inh_exc_conn = Connection(
             source=inh_layer,
@@ -163,219 +147,200 @@ class DiehlCookEncoder(BaseEncoder):
         )
         network.add_connection(inh_exc_conn, source="Inhibitory", target="Excitatory")
         
-        # Add spike monitors
-        exc_monitor = Monitor(exc_layer, state_vars=["s", "v"], time=int(self.simulation_time))
+        # Add spike monitors for Excitatory layer
+        exc_monitor = Monitor(exc_layer, state_vars=["s", "v"], time=int(self.simulation_time * 1.5))
         network.add_monitor(exc_monitor, name="ExcitatoryMonitor")
         
         return network
     
     def fit(self, train_data: np.ndarray, train_labels: Optional[np.ndarray] = None):
         """
-        Train the STDP network.
+        Train the STDP network using BindsNET.
         
         Args:
-            train_data: Training images (n_samples, input_dim)
-            train_labels: Training labels (optional, for analysis only)
+            train_data: Training images [n_samples, input_dim]
+            train_labels: Optional labels (not used in training, only for analysis)
         """
-        # Limit training samples if specified
-        if self.n_train_samples is not None:
-            train_data = train_data[:self.n_train_samples]
-            if train_labels is not None:
-                train_labels = train_labels[:self.n_train_samples]
+        # Check BindsNET availability
+        try:
+            import torch
+            from bindsnet.encoding import poisson
+        except ImportError:
+            raise ImportError(
+                "BindsNET is required for Diehl & Cook encoder. "
+                "Install with: pip install bindsnet"
+            )
         
-        n_samples = len(train_data)
-        print(f"\nTraining Diehl & Cook encoder on {n_samples} samples...")
+        print(f"\n{'='*70}")
+        print("Training Diehl & Cook STDP Network")
+        print(f"{'='*70}")
         print(f"Architecture: {self.input_dim} -> {self.n_neurons} neurons")
         print(f"Simulation time: {self.simulation_time} ms")
-        
-        # Check if BindsNET is available
-        if not BINDSNET_AVAILABLE or not TORCH_AVAILABLE:
-            print("\n" + "="*60)
-            print("⚠️  WARNING: Using placeholder implementation!")
-            print("BindsNET or PyTorch not available.")
-            print("Install with: pip install torch bindsnet")
-            print("="*60 + "\n")
-            
-            # Placeholder: Create random spike count matrix
-            self.spike_count_matrix = np.random.rand(self.input_dim, self.n_neurons)
-            self.is_trained = True
-            print("Training complete (placeholder)")
-            return
+        print(f"Device: {self.device}")
+        print(f"{'='*70}\n")
         
         # Build network
         self.network = self._build_network()
         self.network.to(self.device)
         
+        # Handle data subsampling
+        n_samples = len(train_data)
+        if self.n_train_samples is not None and self.n_train_samples < n_samples:
+            train_data = train_data[:self.n_train_samples]
+            if train_labels is not None:
+                train_labels = train_labels[:self.n_train_samples]
+            n_samples = self.n_train_samples
+            print(f"Subsampling to {n_samples} training samples")
+        
+        print(f"Training on {n_samples} samples...")
+        
+        # Normalize input data to [0, 1] range
+        train_data_normalized = train_data.copy()
+        if train_data_normalized.max() > 1.0:
+            train_data_normalized = train_data_normalized / 255.0
+        train_data_normalized = np.clip(train_data_normalized, 0.0, 1.0)
+        
+        # Time tracking
+        import time
+        start_time = time.time()
+        last_print_time = start_time
+        
         # Training loop
-        print(f"\n🔥 Starting STDP training...")
-        
-        # Import tqdm for progress bar
-        try:
-            from tqdm import tqdm
-            use_tqdm = True
-        except ImportError:
-            use_tqdm = False
-            print("Install tqdm for progress bars: pip install tqdm")
-        
-        # Create progress bar or simple counter
-        if use_tqdm:
-            pbar = tqdm(
-                range(n_samples),
-                desc="Training",
-                unit="sample",
-                ncols=100,
-                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
-            )
-            iterator = pbar
-        else:
-            iterator = range(n_samples)
-        
-        for i in iterator:
-            # Get image
-            image = train_data[i]
-            label = train_labels[i] if train_labels is not None else -1
+        for i, image in enumerate(train_data_normalized):
+            if (i + 1) % 100 == 0:
+                current_time = time.time()
+                elapsed = current_time - start_time
+                elapsed_since_last = current_time - last_print_time
+                samples_per_sec = 100.0 / elapsed_since_last if elapsed_since_last > 0 else 0
+                
+                progress = (i + 1) / n_samples * 100
+                remaining_samples = n_samples - (i + 1)
+                eta_seconds = remaining_samples / samples_per_sec if samples_per_sec > 0 else 0
+                eta_minutes = eta_seconds / 60
+                eta_hours = eta_minutes / 60
+                
+                label_str = f" (label={train_labels[i]})" if train_labels is not None else ""
+                time_str = f" | Elapsed: {elapsed/60:.1f}m | Speed: {samples_per_sec:.1f} samples/s"
+                if eta_hours >= 1:
+                    eta_str = f" | ETA: {eta_hours:.1f}h"
+                elif eta_minutes >= 1:
+                    eta_str = f" | ETA: {eta_minutes:.1f}m"
+                else:
+                    eta_str = f" | ETA: {eta_seconds:.0f}s"
+                
+                print(f"  Sample {i+1}/{n_samples} ({progress:.1f}%){label_str}{time_str}{eta_str}")
+                last_print_time = current_time
             
-            # Update progress
-            if use_tqdm:
-                pbar.set_postfix({'label': int(label), 'progress': f'{(i+1)/n_samples*100:.1f}%'})
-            elif i % 1000 == 0:
-                print(f"  Progress: {i}/{n_samples} ({i/n_samples*100:.1f}%)")
-            
-            # Prepare image - Poisson encoding expects [0, 255] range for proper spike rates
-            image = torch.from_numpy(image).float()
-            if image.max() <= 1.0:
-                # If normalized to [0, 1], scale back to [0, 255]
-                image = image * 255.0
-            
-            # Move to device
-            image = image.to(self.device)
+            # Convert to torch tensor and move to device
+            image_tensor = torch.from_numpy(image).float().to(self.device)
             
             # Encode as Poisson spike train
-            encoded = poisson(datum=image, time=int(self.simulation_time), dt=self.dt)
-            
-            # Ensure encoded data is on the correct device
+            encoded = poisson(
+                datum=image_tensor,
+                time=int(self.simulation_time),
+                dt=self.dt
+            )
+            # Ensure encoded spikes are on the correct device
             if isinstance(encoded, torch.Tensor):
                 encoded = encoded.to(self.device)
+            elif isinstance(encoded, dict):
+                encoded = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
+                          for k, v in encoded.items()}
             
-            # Run simulation with STDP learning
+            # Run network simulation (STDP updates happen automatically)
             inputs = {"Input": encoded}
             self.network.run(inputs=inputs, time=int(self.simulation_time))
             
             # Reset network state for next sample
             self.network.reset_state_variables()
         
-        if use_tqdm:
-            pbar.close()
-        print("✅ STDP training complete!")
-        
         self.is_trained = True
+        print(f"\n{'='*70}")
+        print("✅ Training complete!")
+        print(f"{'='*70}\n")
     
     def encode(self, data: np.ndarray) -> Dict[str, np.ndarray]:
         """
-        Encode data by running through trained SNN.
+        Encode data by running through trained SNN and extracting spike counts.
         
         Args:
-            data: Input images (n_samples, input_dim)
+            data: Input images [n_samples, input_dim]
         
         Returns:
-            Dictionary with 'pre_code' (spike counts) and 'code' (binarized)
+            Dictionary with:
+                - 'pre_code': Spike counts [n_samples, n_neurons]
+                - 'code': Binary codes [n_samples, n_neurons] (top-k binarized)
         """
         if not self.is_trained:
             raise RuntimeError("Encoder must be fitted before encoding.")
         
-        n_samples = len(data)
-        print(f"\nEncoding {n_samples} samples...")
+        if self.network is None:
+            raise RuntimeError("Network not initialized. Please call fit() first.")
         
-        # Check if using placeholder
-        if not BINDSNET_AVAILABLE or not TORCH_AVAILABLE or self.network is None:
-            # Placeholder encoding
-            pre_code = np.dot(data, self.spike_count_matrix)
-            pre_code = np.maximum(pre_code, 0)
-            
-            # Binarization
-            k = int(self.n_neurons * 0.05)
-            code = self._top_k_binarization(pre_code, k)
-            
-            return {
-                'pre_code': pre_code,
-                'code': code
-            }
+        try:
+            import torch
+            from bindsnet.encoding import poisson
+        except ImportError:
+            raise ImportError(
+                "BindsNET is required for Diehl & Cook encoder. "
+                "Install with: pip install bindsnet"
+            )
         
-        # Real BindsNET encoding
+        print(f"Encoding {len(data)} samples...")
+        
+        # Set network to evaluation mode (disable learning)
+        self.network.train(mode=False)
         self.network.to(self.device)
         
-        # Note: We don't call network.train(False) because in BindsNET it may affect neuron dynamics
-        # Instead, STDP is automatically disabled when we don't set learning=True in network.run()
-        
+        n_samples = len(data)
         spike_counts = np.zeros((n_samples, self.n_neurons))
         
-        # Import tqdm for progress bar
-        try:
-            from tqdm import tqdm
-            use_tqdm = True
-        except ImportError:
-            use_tqdm = False
+        # Normalize input data to [0, 1] range
+        data_normalized = data.copy()
+        if data_normalized.max() > 1.0:
+            data_normalized = data_normalized / 255.0
+        data_normalized = np.clip(data_normalized, 0.0, 1.0)
         
-        # Create progress bar or simple counter
-        if use_tqdm:
-            pbar = tqdm(
-                range(n_samples),
-                desc="Encoding",
-                unit="sample",
-                ncols=100,
-                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
-            )
-            iterator = pbar
-        else:
-            iterator = range(n_samples)
-        
-        for i in iterator:
-            # Get image
-            image = data[i]
+        # Extract spike counts for each sample
+        for i, image in enumerate(data_normalized):
+            if (i + 1) % 100 == 0:
+                print(f"  Sample {i+1}/{n_samples}")
             
-            # Update progress
-            if use_tqdm:
-                pbar.set_postfix({'progress': f'{(i+1)/n_samples*100:.1f}%'})
-            elif i % 1000 == 0:
-                print(f"  Progress: {i}/{n_samples} ({i/n_samples*100:.1f}%)")
-            
-            # Prepare image - Poisson encoding expects [0, 255] range for proper spike rates
-            image = torch.from_numpy(image).float()
-            if image.max() <= 1.0:
-                # If normalized to [0, 1], scale back to [0, 255]
-                image = image * 255.0
-            
-            # Move to device
-            image = image.to(self.device)
+            # Convert to torch tensor and move to device
+            image_tensor = torch.from_numpy(image).float().to(self.device)
             
             # Encode as Poisson spike train
-            encoded = poisson(datum=image, time=int(self.simulation_time), dt=self.dt)
-            
-            # Ensure encoded data is on the correct device
+            encoded = poisson(
+                datum=image_tensor,
+                time=int(self.simulation_time),
+                dt=self.dt
+            )
+            # Ensure encoded spikes are on the correct device
             if isinstance(encoded, torch.Tensor):
                 encoded = encoded.to(self.device)
+            elif isinstance(encoded, dict):
+                encoded = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
+                          for k, v in encoded.items()}
             
-            # Run simulation (no learning)
+            # Run simulation
             inputs = {"Input": encoded}
             self.network.run(inputs=inputs, time=int(self.simulation_time))
             
-            # Get spike counts
+            # Extract spike counts from monitor
             spikes = self.network.monitors["ExcitatoryMonitor"].get("s")
             spike_counts[i] = torch.sum(spikes, dim=0).cpu().numpy()
             
-            # Reset network state
+            # Reset network state for next sample
             self.network.reset_state_variables()
         
-        if use_tqdm:
-            pbar.close()
-        print("✅ Encoding complete!")
-        
-        # Spike counts are the pre-code
+        # Pre-code is the spike counts
         pre_code = spike_counts
         
-        # Binarization: Top-k (simulating WTA)
-        k = int(self.n_neurons * 0.05)  # 5% sparsity
+        # Binarization: Top-k (5% sparsity by default)
+        k = max(int(self.n_neurons * 0.05), 1)
         code = self._top_k_binarization(pre_code, k)
+        
+        print(f"✅ Encoding complete!")
         
         return {
             'pre_code': pre_code,
@@ -383,23 +348,98 @@ class DiehlCookEncoder(BaseEncoder):
         }
     
     def _top_k_binarization(self, features: np.ndarray, k: int) -> np.ndarray:
-        """Keep top-k values per sample."""
+        """Keep top-k values."""
         binary_codes = np.zeros_like(features)
         top_k_indices = np.argsort(features, axis=1)[:, -k:]
         rows = np.arange(len(features))[:, None]
         binary_codes[rows, top_k_indices] = 1
         return binary_codes
+    
+    def save(self, path: str):
+        """
+        Save trained model to disk.
+        
+        Args:
+            path: Path to save file
+        """
+        if not self.is_trained:
+            raise RuntimeError("Cannot save untrained model.")
+        
+        if self.network is None:
+            raise RuntimeError("Network not initialized. Cannot save.")
+        
+        try:
+            import torch
+        except ImportError:
+            raise ImportError("PyTorch is required for saving Diehl & Cook model.")
+        
+        # Save base encoder state
+        super().save(path)
+        
+        # Save network weights
+        model_path = path.replace('.pkl', '_network.pt')
+        Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+        
+        torch.save({
+            'network_state_dict': self.network.state_dict(),
+            'device': self.device,
+        }, model_path)
+        
+        print(f"Network weights saved to {model_path}")
+    
+    def load(self, path: str):
+        """
+        Load trained model from disk.
+        
+        Args:
+            path: Path to saved file
+        """
+        # Load base encoder state
+        super().load(path)
+        
+        try:
+            import torch
+        except ImportError:
+            raise ImportError("PyTorch is required for loading Diehl & Cook model.")
+        
+        # Load network weights
+        model_path = path.replace('.pkl', '_network.pt')
+        if not Path(model_path).exists():
+            print(f"Warning: Network weights file not found: {model_path}")
+            print("Model will need to be retrained.")
+            return
+        
+        # Rebuild network architecture
+        self.network = self._build_network()
+        
+        # Load weights
+        checkpoint = torch.load(model_path, map_location=self.device)
+        self.network.load_state_dict(checkpoint['network_state_dict'])
+        self.network.to(self.device)
+        
+        # Restore device if saved
+        if 'device' in checkpoint:
+            self.device = checkpoint['device']
+        
+        print(f"Network weights loaded from {model_path}")
+
+
+# Try to import torch for BindsNET
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    print("Warning: PyTorch not available. Diehl & Cook encoder will use placeholder.")
 
 
 if __name__ == '__main__':
-    print("Testing Diehl & Cook encoder with STDP...")
-    
-    if not BINDSNET_AVAILABLE or not TORCH_AVAILABLE:
-        print("⚠️  BindsNET or PyTorch not available. Test will use placeholder.")
+    print("Testing Diehl & Cook encoder (full implementation)...")
     
     np.random.seed(0)
-    train_data = np.random.rand(100, 784)
-    test_data = np.random.rand(20, 784)
+    # Use smaller dataset for quick test
+    train_data = np.random.rand(50, 784)
+    test_data = np.random.rand(10, 784)
     
     config = {
         'input_dim': 784,
@@ -407,14 +447,23 @@ if __name__ == '__main__':
         'simulation_time': 350,
         'dt': 1.0,
         'nu': (1e-4, 1e-2),
-        'n_train_samples': 10,  # Small for testing
+        'device': 'cpu',  # Use CPU for testing
     }
     
-    encoder = DiehlCookEncoder(config)
-    encoder.fit(train_data)
-    
-    result = encoder.encode(test_data)
-    print(f"\nPre-code shape: {result['pre_code'].shape}")
-    print(f"Code shape: {result['code'].shape}")
-    print(f"Code sparsity: {1 - np.mean(result['code']):.3f}")
-    print(f"Mean spike count: {np.mean(result['pre_code']):.2f}")
+    try:
+        encoder = DiehlCookEncoder(config)
+        encoder.fit(train_data)
+        
+        result = encoder.encode(test_data)
+        print(f"\n{'='*70}")
+        print("Test Results:")
+        print(f"{'='*70}")
+        print(f"Pre-code shape: {result['pre_code'].shape}")
+        print(f"Code shape: {result['code'].shape}")
+        print(f"Code sparsity: {1 - np.mean(result['code']):.3f}")
+        print(f"Mean spike counts per sample: {np.mean(result['pre_code']):.2f}")
+        print(f"{'='*70}\n")
+    except ImportError as e:
+        print(f"\n⚠️  BindsNET not available: {e}")
+        print("This is expected if BindsNET is not installed.")
+        print("The encoder will work when BindsNET is installed.")

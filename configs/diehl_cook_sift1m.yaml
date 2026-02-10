@@ -1,18 +1,19 @@
-# Diehl & Cook (2015) STDP baseline configuration
+# Diehl & Cook (2015) STDP baseline configuration for SIFT-1M dataset
+# SIFT-1M: 128-dimensional SIFT descriptors from 1M images
 
 # Experiment settings
-experiment_name: "diehl_cook_mnist"
+experiment_name: "diehl_cook_sift1m"
 seed: 0
 output_dir: "./outputs"
 
 # Dataset
-dataset: "mnist"
+dataset: "sift1m"
 data_root: "./data"
 
 # Encoder
 encoder: "diehl_cook"
 encoder_config:
-  input_dim: 784
+  input_dim: 128  # SIFT descriptor dimension
   n_neurons: 400  # Excitatory neurons
   simulation_time: 350  # ms
   dt: 1.0  # ms
@@ -27,6 +28,7 @@ encoder_config:
   
   # Training
   n_train_samples: null  # null = use all training samples
+  device: "cuda"  # BindsNET benefits from GPU
 
 # Feature extraction
 binarization_method: "top_k_percent"
@@ -34,15 +36,10 @@ binarization_params:
   percent: 0.05  # 5% sparsity
 
 # Evaluation
-eval_clustering: true
-eval_retrieval: true
-n_clusters: 10
+eval_clustering: false  # No labels for SIFT1M
+eval_retrieval: true    # Retrieval is the primary task
 
-# Clustering settings
-clustering_methods:
-  - kmeans
-  - kmedoids
-  - spectral
+retrieval_k_values: [1, 10, 50, 100]
 
 # Hardware
 device: "cuda"  # BindsNET benefits from GPU
@@ -51,3 +48,8 @@ device: "cuda"  # BindsNET benefits from GPU
 verbose: true
 save_codes: true
 save_model: true
+
+# Notes:
+# - SIFT-1M is primarily for retrieval/ANN evaluation
+# - Full 1M vectors requires significant memory and training time
+# - Consider using n_train_samples to limit training size for testing

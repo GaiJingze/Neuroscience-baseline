@@ -34,14 +34,14 @@ encoder_config:
 
 # Evaluation configuration
 eval_clustering: true
-eval_retrieval: false  # Not applicable for MNIST
+eval_retrieval: true
 
 # Clustering parameters
-n_clusters: 10  # Number of clusters (MNIST has 10 classes)
-clustering_methods: ["kmeans"]  # Options: kmeans, spectral, kmedoids
+n_clusters: 10
+clustering_methods: ["kmeans"]
 
-# Retrieval parameters (if applicable)
-retrieval_k_values: [10, 50, 100]
+# Retrieval parameters
+retrieval_k_values: [1, 10, 50, 100]
 
 # Output
 output_dir: "./outputs"

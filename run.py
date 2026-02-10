@@ -141,7 +141,7 @@ Examples:
         print("  python scripts/test_baseline.py flyhash")
         print()
         print("  # Test multiple baselines")
-        print("  python scripts/test_baseline.py flyhash diehl_cook")
+        print("  python scripts/test_baseline.py flyhash softhebb biohash")
         print()
         print("  # Batch test")
         print("  bash scripts/batch_test.sh --quick")
