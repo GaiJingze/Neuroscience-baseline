@@ -31,6 +31,9 @@ encoder_config:
   # Device
   device: "cuda"
 
+# Binarization (done internally via top-k on softmax output)
+binarization_method: "none"
+
 # Evaluation configuration
 eval_clustering: true
 eval_retrieval: true

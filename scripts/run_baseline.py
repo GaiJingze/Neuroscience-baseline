@@ -68,6 +68,29 @@ def get_encoder(name: str, config: dict):
     return encoders[name](config)
 
 
+def _apply_binarization(pre_code: np.ndarray, config: dict) -> np.ndarray:
+    """Apply pipeline-level binarization if configured.
+
+    Returns binarized code, or None if no binarization is configured.
+    """
+    method = config.get('binarization_method')
+    if not method or method == 'none':
+        return None
+    params = config.get('binarization_params', {})
+    if method == 'top_k':
+        k = params.get('k')
+        if k is None:
+            raise ValueError("binarization_method='top_k' requires binarization_params.k")
+        return top_k_binarization(pre_code, k)
+    elif method == 'top_k_percent':
+        percent = params.get('percent')
+        if percent is None:
+            raise ValueError("binarization_method='top_k_percent' requires binarization_params.percent")
+        return top_k_percent_binarization(pre_code, percent)
+    else:
+        raise ValueError(f"Unknown binarization_method: {method}")
+
+
 def preprocess_data(data: np.ndarray, dataset_name: str, encoder_name: str) -> np.ndarray:
     """
     Preprocess data based on dataset and encoder requirements.
@@ -255,15 +278,11 @@ def main(args):
         pre_code = encoded['pre_code']
         code = encoded['code']
         
-        # Apply additional binarization if needed
-        if config.get('binarization_method') and config['binarization_method'] != 'none':
+        # Apply additional binarization if configured
+        binarized = _apply_binarization(pre_code, config)
+        if binarized is not None:
             logger.log(f"  Applying {config['binarization_method']} binarization...")
-            if config['binarization_method'] == 'top_k':
-                k = config['binarization_params']['k']
-                code = top_k_binarization(pre_code, k)
-            elif config['binarization_method'] == 'top_k_percent':
-                percent = config['binarization_params']['percent']
-                code = top_k_percent_binarization(pre_code, percent)
+            code = binarized
         
         # Save codes
         if config.get('save_codes', True):
@@ -322,11 +341,9 @@ def main(args):
             query_pre = query_encoded['pre_code']
             query_code = query_encoded['code']
             # Apply the same pipeline binarization to query codes for consistency
-            if config.get('binarization_method') and config['binarization_method'] != 'none':
-                if config['binarization_method'] == 'top_k':
-                    query_code = top_k_binarization(query_pre, config['binarization_params']['k'])
-                elif config['binarization_method'] == 'top_k_percent':
-                    query_code = top_k_percent_binarization(query_pre, config['binarization_params']['percent'])
+            binarized = _apply_binarization(query_pre, config)
+            if binarized is not None:
+                query_code = binarized
             database_code = code
             groundtruth = dataset['groundtruth']
 
@@ -339,11 +356,9 @@ def main(args):
             train_pre = train_encoded['pre_code']
             database_code = train_encoded['code']
             # Apply the same pipeline binarization to database codes for consistency
-            if config.get('binarization_method') and config['binarization_method'] != 'none':
-                if config['binarization_method'] == 'top_k':
-                    database_code = top_k_binarization(train_pre, config['binarization_params']['k'])
-                elif config['binarization_method'] == 'top_k_percent':
-                    database_code = top_k_percent_binarization(train_pre, config['binarization_params']['percent'])
+            binarized = _apply_binarization(train_pre, config)
+            if binarized is not None:
+                database_code = binarized
             query_code = code  # test_data already encoded + binarized above
             # Build groundtruth from labels
             groundtruth = build_label_groundtruth(
