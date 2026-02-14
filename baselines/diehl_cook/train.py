@@ -60,12 +60,12 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
         reset=-60.0,
         thresh=-52.0,
         refrac=5,
-        decay=1e-2,
+        tc_decay=100.0,  # Membrane time constant (ms)
         trace_tc=5e-2,
         theta_plus=0.05,  # Adaptive threshold increment
         tc_theta_decay=1e7,  # Adaptive threshold decay
     )
-    
+
     # Inhibitory layer (for lateral inhibition)
     inh_layer = LIFNodes(
         n=n_neurons,
@@ -73,7 +73,7 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
         rest=-60.0,
         reset=-45.0,
         thresh=-40.0,
-        decay=1e-1,
+        tc_decay=10.0,  # Membrane time constant (ms)
         refrac=2,
         trace_tc=5e-2,
     )
@@ -98,8 +98,8 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
     )
     network.add_connection(input_exc_conn, source="Input", target="Excitatory")
     
-    # Excitatory -> Inhibitory (one-to-one)
-    w = torch.eye(n_neurons)
+    # Excitatory -> Inhibitory (one-to-one, weight=22.5)
+    w = 22.5 * torch.eye(n_neurons)
     exc_inh_conn = Connection(
         source=exc_layer,
         target=inh_layer,
@@ -108,9 +108,10 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
         wmax=22.5,
     )
     network.add_connection(exc_inh_conn, source="Excitatory", target="Inhibitory")
-    
-    # Inhibitory -> Excitatory (all-to-all except diagonal)
-    w = 10.4 * (torch.ones(n_neurons, n_neurons) - torch.diag(torch.ones(n_neurons)))
+
+    # Inhibitory -> Excitatory (all-to-all except diagonal, lateral inhibition)
+    # Weights must be NEGATIVE for inhibition (official default: -17.5)
+    w = -17.5 * (torch.ones(n_neurons, n_neurons) - torch.diag(torch.ones(n_neurons)))
     inh_exc_conn = Connection(
         source=inh_layer,
         target=exc_layer,
