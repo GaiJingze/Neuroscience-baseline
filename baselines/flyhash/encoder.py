@@ -59,23 +59,29 @@ class FlyHashEncoder(BaseEncoder):
         self.is_trained = True
     
     def _create_sparse_projection(self) -> np.ndarray:
-        """Create sparse random projection matrix."""
-        # Each output neuron connects to ~sampling_ratio of input neurons
-        n_connections_per_neuron = int(self.input_dim * self.sampling_ratio)
-        
+        """Create sparse binary projection matrix.
+
+        Matches the fruit fly olfactory circuit: each Kenyon cell (KC) connects
+        to ~sampling_ratio of projection neurons (PNs) with binary weights (0/1).
+        The KC activation is a simple sum of connected PN firing rates.
+
+        Ref: Dasgupta, Stevens & Navlakha, Science 2017, Fig. 1 & Eq. 1.
+        """
+        # Each output neuron (KC) connects to ~sampling_ratio of input neurons (PNs)
+        n_connections_per_neuron = max(1, int(self.input_dim * self.sampling_ratio))
+
         projection = np.zeros((self.input_dim, self.projection_dim))
-        
+
         for j in range(self.projection_dim):
             # Randomly select input neurons to connect
             selected_inputs = np.random.choice(
-                self.input_dim, 
-                size=n_connections_per_neuron, 
+                self.input_dim,
+                size=n_connections_per_neuron,
                 replace=False
             )
-            # Random weights (typically uniform or Gaussian)
-            weights = np.random.randn(n_connections_per_neuron)
-            projection[selected_inputs, j] = weights
-        
+            # Binary weights: connected = 1, disconnected = 0
+            projection[selected_inputs, j] = 1.0
+
         return projection
     
     def encode(self, data: np.ndarray) -> Dict[str, np.ndarray]:

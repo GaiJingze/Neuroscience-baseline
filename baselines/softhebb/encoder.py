@@ -2,7 +2,7 @@
 SoftHebb encoder implementation.
 
 Based on: "SoftHebb: Bayesian inference in unsupervised Hebbian soft winner-take-all networks"
-Kozachkov et al., Neural Computation and Engineering (2022), ICLR (2023)
+Moraitis et al., Neural Computation and Engineering (2022), ICLR (2023)
 
 Paper: https://iopscience.iop.org/article/10.1088/2634-4386/ac98a9
 Official repo: https://github.com/NeuromorphicComputing/SoftHebb
@@ -25,232 +25,188 @@ from baselines.base_encoder import BaseEncoder
 class SoftHebbLayer(nn.Module):
     """
     A single SoftHebb layer implementing probabilistic Hebbian learning.
-    
+
+    Matches the official algorithm from:
+    Moraitis et al., "SoftHebb: Bayesian inference in unsupervised Hebbian
+    soft winner-take-all networks", NCE 2022 / ICLR 2023.
+    Ref: https://github.com/NeuromorphicComputing/SoftHebb
+
     Key components:
-    - Soft Winner-Take-All (soft-WTA) activation
-    - Hebbian weight updates
-    - Lateral inhibition through soft competition
+    - Temperature-scaled softmax as soft-WTA (NOT hard top-k)
+    - Self-normalizing Hebbian update: ΔW = η * y * (x - u * w)
+    - All neurons participate in competition via softmax probabilities
     """
-    
-    def __init__(self, input_dim: int, output_dim: int, k: int, 
-                 beta: float = 5.0, eta: float = 0.01):
+
+    def __init__(self, input_dim: int, output_dim: int,
+                 t_invert: float = 5.0, eta: float = 0.01):
         """
         Args:
             input_dim: Input feature dimension
             output_dim: Number of output neurons
-            k: Top-k for soft WTA (sparsity parameter)
-            beta: Temperature parameter for soft-WTA (higher = more sparse)
+            t_invert: Inverse temperature for softmax (higher = sharper)
             eta: Learning rate for Hebbian updates
         """
         super().__init__()
-        
+
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.k = k
-        self.beta = beta
+        self.t_invert = t_invert
         self.eta = eta
-        
-        # Weight matrix: forward connections (normalized initialization)
+
+        # Weight matrix [output_dim, input_dim], L2-normalized rows
         W_init = torch.randn(output_dim, input_dim)
-        W_init = F.normalize(W_init, p=2, dim=1)  # Normalize each row
-        self.W = nn.Parameter(W_init * 0.1)
-        
-        # Lateral inhibition matrix (optional, for stronger WTA)
-        # In soft-WTA, this is implicit through the competition mechanism
-        
-    def soft_wta(self, x: torch.Tensor) -> torch.Tensor:
+        W_init = F.normalize(W_init, p=2, dim=1)
+        self.W = nn.Parameter(W_init)
+
+    def forward(self, x: torch.Tensor) -> tuple:
         """
-        Soft Winner-Take-All activation.
-        
-        Instead of hard top-k selection, uses a differentiable approximation:
-        - Compute activations
-        - Apply soft competition (e.g., softmax with temperature)
-        - Keep top-k winners (soft)
-        
-        Args:
-            x: Input activations [batch_size, output_dim]
-            
-        Returns:
-            Soft-WTA activations [batch_size, output_dim]
-        """
-        # Get top-k values and indices
-        topk_values, topk_indices = torch.topk(x, k=min(self.k, x.size(1)), dim=1)
-        
-        # Create mask for top-k
-        mask = torch.zeros_like(x)
-        mask.scatter_(1, topk_indices, 1.0)
-        
-        # Apply mask to keep only top-k
-        # Use the original activation values (not softmax) to preserve diversity
-        output = x * mask
-        
-        # Optional: Apply temperature scaling to top-k values for soft competition
-        # This makes the distribution softer while maintaining diversity
-        if self.beta > 1.0:
-            # Scale the masked values
-            output = output * self.beta
-        
-        return output
-    
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass with soft-WTA.
-        
+        Forward pass with temperature-scaled softmax soft-WTA.
+
         Args:
             x: Input tensor [batch_size, input_dim]
-            
+
         Returns:
-            Output activations [batch_size, output_dim]
+            (wta, pre_activation):
+                wta: Softmax probabilities [batch_size, output_dim]
+                pre_activation: Linear pre-activation u [batch_size, output_dim]
         """
-        # Linear projection
-        activations = F.linear(x, self.W)
-        
-        # Apply ReLU (common in Hebbian networks)
-        activations = F.relu(activations)
-        
-        # Apply soft-WTA
-        output = self.soft_wta(activations)
-        
-        return output
-    
-    def hebbian_update(self, x: torch.Tensor, y: torch.Tensor):
+        # Linear projection: u = W @ x
+        pre_act = F.linear(x, self.W)  # [batch, output_dim]
+
+        # Soft-WTA via temperature-scaled softmax (Eq. 7 in paper)
+        # y_k = softmax(u / τ) = softmax(t_invert * u)
+        wta = F.softmax(self.t_invert * pre_act, dim=1)
+
+        return wta, pre_act
+
+    def hebbian_update(self, x: torch.Tensor, wta: torch.Tensor,
+                       pre_act: torch.Tensor):
         """
-        Hebbian weight update: ΔW = η * y * x^T
-        
-        This implements the classic Hebbian rule: "neurons that fire together, wire together"
-        
+        Self-normalizing Hebbian update (Eq. 8 in paper):
+            ΔW_ik = η * y_k * (x_i − u_k * W_ik)
+
+        In matrix form:
+            ΔW = η * (y^T @ x − diag(y^T @ u) * W)
+
         Args:
             x: Input [batch_size, input_dim]
-            y: Output [batch_size, output_dim]
+            wta: Softmax probabilities [batch_size, output_dim]
+            pre_act: Linear pre-activation [batch_size, output_dim]
         """
         with torch.no_grad():
-            # Compute outer product: y^T * x
-            # Average over batch
-            delta_W = torch.matmul(y.T, x) / x.size(0)
-            
-            # Update weights
+            batch_size = x.size(0)
+
+            # Hebbian correlation: y^T @ x  →  [output_dim, input_dim]
+            yx = torch.matmul(wta.T, x) / batch_size
+
+            # Self-normalizing term: sum_batch(y_k * u_k) per neuron
+            yu = torch.sum(wta * pre_act, dim=0) / batch_size  # [output_dim]
+
+            # ΔW = y*x − y*u*W  (Eq. 8)
+            delta_W = yx - yu.unsqueeze(1) * self.W
+
             self.W.data += self.eta * delta_W
-            
-            # Normalize weights to prevent unbounded growth and maintain stability
+
+            # L2 normalize rows (maintains unit-norm constraint)
             self.W.data = F.normalize(self.W.data, p=2, dim=1)
 
 
 class SoftHebbNetwork(nn.Module):
     """
     Multi-layer SoftHebb network.
-    
-    Can be single-layer or multi-layer for hierarchical feature learning.
+
+    Each layer: linear projection → softmax soft-WTA → Hebbian update.
+    The softmax probabilities are passed as input to the next layer.
     """
-    
-    def __init__(self, layer_dims: list, k_values: list, 
-                 beta: float = 5.0, eta: float = 0.01):
+
+    def __init__(self, layer_dims: list,
+                 t_invert: float = 5.0, eta: float = 0.01):
         """
         Args:
-            layer_dims: List of layer dimensions [input_dim, hidden1, hidden2, ..., output_dim]
-            k_values: Top-k for each layer
-            beta: Temperature for soft-WTA
+            layer_dims: List of layer dimensions [input_dim, hidden1, ..., output_dim]
+            t_invert: Inverse temperature for softmax soft-WTA
             eta: Hebbian learning rate
         """
         super().__init__()
-        
+
         self.layers = nn.ModuleList()
-        
+
         for i in range(len(layer_dims) - 1):
             layer = SoftHebbLayer(
                 input_dim=layer_dims[i],
                 output_dim=layer_dims[i+1],
-                k=k_values[i] if isinstance(k_values, list) else k_values,
-                beta=beta,
+                t_invert=t_invert,
                 eta=eta
             )
             self.layers.append(layer)
-    
-    def forward(self, x: torch.Tensor, return_all: bool = False):
+
+    def forward(self, x: torch.Tensor):
         """
         Forward pass through all layers.
-        
+
         Args:
             x: Input [batch_size, input_dim]
-            return_all: If True, return all layer activations
-            
+
         Returns:
-            Output of final layer (or dict of all layers if return_all=True)
+            Softmax probabilities from the final layer [batch_size, output_dim]
         """
-        activations = {'input': x}
         h = x
-        
-        for i, layer in enumerate(self.layers):
-            h = layer(h)
-            activations[f'layer_{i}'] = h
-        
-        if return_all:
-            return activations
-        else:
-            return h
-    
+        for layer in self.layers:
+            wta, _ = layer(h)
+            h = wta
+        return h
+
     def train_step(self, x: torch.Tensor):
         """
-        Single training step with Hebbian updates.
-        
+        Single training step with layer-wise Hebbian updates.
+
         Args:
             x: Input batch [batch_size, input_dim]
         """
-        # Forward pass
         h = x
-        inputs = [x]
-        outputs = []
-        
         for layer in self.layers:
-            h = layer(h)
-            outputs.append(h)
-            inputs.append(h)
-        
-        # Backward Hebbian updates (layer by layer)
-        for i, layer in enumerate(self.layers):
-            layer.hebbian_update(inputs[i], outputs[i])
+            wta, pre_act = layer(h)
+            layer.hebbian_update(h, wta, pre_act)
+            h = wta  # Next layer receives softmax output
 
 
 class SoftHebbEncoder(BaseEncoder):
     """
     SoftHebb encoder for clustering/hashing pipeline.
-    
-    Implements probabilistic Hebbian learning with soft Winner-Take-All.
+
+    Implements probabilistic Hebbian learning with softmax soft-WTA.
+    Ref: Moraitis et al., NCE 2022 / ICLR 2023.
     """
-    
+
     def __init__(self, config: dict):
         super().__init__(config)
-        
+
         self.input_dim = config['input_dim']
         self.hidden_dims = config.get('hidden_dims', [1000, 500])  # Multi-layer
         self.output_dim = config.get('output_dim', 400)
-        
-        # Sparsity parameters
-        self.k_values = config.get('k_values', [50, 20])  # Top-k for each layer
-        if isinstance(self.k_values, int):
-            self.k_values = [self.k_values] * len(self.hidden_dims)
-        
+
         # SoftHebb hyperparameters
-        self.beta = config.get('beta', 5.0)  # Temperature for soft-WTA
+        # t_invert = inverse temperature (1/τ); higher = sharper competition
+        # Accepts 'beta' for backward-compatibility with existing configs
+        self.t_invert = config.get('t_invert', config.get('beta', 5.0))
         self.eta = config.get('eta', 0.01)  # Hebbian learning rate
-        
+
         # Training parameters
         self.n_epochs = config.get('n_epochs', 10)
         self.batch_size = config.get('batch_size', 128)
-        
+
         # Device
         self.device = config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')
-        
+
         # Build network
         layer_dims = [self.input_dim] + self.hidden_dims + [self.output_dim]
-        k_values_full = self.k_values + [int(self.output_dim * 0.05)]  # 5% for final layer
-        
+
         self.network = SoftHebbNetwork(
             layer_dims=layer_dims,
-            k_values=k_values_full,
-            beta=self.beta,
+            t_invert=self.t_invert,
             eta=self.eta
         ).to(self.device)
-        
+
         self.is_trained = False
     
     def fit(self, train_data: np.ndarray, train_labels: Optional[np.ndarray] = None):
@@ -265,8 +221,7 @@ class SoftHebbEncoder(BaseEncoder):
         print("Training SoftHebb Network")
         print(f"{'='*60}")
         print(f"Architecture: {self.input_dim} -> {' -> '.join(map(str, self.hidden_dims))} -> {self.output_dim}")
-        print(f"K-values (sparsity): {self.k_values + [int(self.output_dim * 0.05)]}")
-        print(f"Beta (temperature): {self.beta}")
+        print(f"Inverse temperature (1/τ): {self.t_invert}")
         print(f"Eta (learning rate): {self.eta}")
         print(f"Training samples: {len(train_data)}")
         print(f"Epochs: {self.n_epochs}")
@@ -368,8 +323,7 @@ class SoftHebbEncoder(BaseEncoder):
                 'input_dim': self.input_dim,
                 'hidden_dims': self.hidden_dims,
                 'output_dim': self.output_dim,
-                'k_values': self.k_values,
-                'beta': self.beta,
+                't_invert': self.t_invert,
                 'eta': self.eta,
             }
         }, model_path)
@@ -402,8 +356,7 @@ if __name__ == '__main__':
         'input_dim': 784,
         'hidden_dims': [1000, 500],
         'output_dim': 400,
-        'k_values': [50, 20],
-        'beta': 5.0,
+        't_invert': 5.0,
         'eta': 0.01,
         'n_epochs': 3,
         'batch_size': 128,
