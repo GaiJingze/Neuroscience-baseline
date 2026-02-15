@@ -1,6 +1,7 @@
 # SoftHebb Configuration
 # Paper: "SoftHebb: Bayesian inference in unsupervised Hebbian soft winner-take-all networks"
-# Kozachkov et al., Neural Computation and Engineering (2022), ICLR (2023)
+# Moraitis et al., Neural Computation and Engineering (2022), ICLR (2023)
+# Ref: https://github.com/NeuromorphicComputing/SoftHebb
 
 experiment_name: "softhebb_mnist"
 
@@ -12,25 +13,26 @@ data_root: "./data"
 encoder: "softhebb"
 encoder_config:
   input_dim: 784  # 28x28 for MNIST
-  
+
   # Network architecture
   hidden_dims: [1000, 500]  # Multi-layer: 784 -> 1000 -> 500 -> 400
   output_dim: 400  # Final feature dimension
-  
-  # Sparsity parameters (top-k for each layer)
-  k_values: [100, 50]  # Top-100 for layer 1, top-50 for layer 2
-  # Final layer uses 5% of output_dim (20 for 400)
-  
+
   # SoftHebb hyperparameters
-  beta: 5.0  # Temperature for soft-WTA (higher = more sparse, typical: 1-10)
-  eta: 0.01  # Hebbian learning rate (typical: 0.001-0.1)
-  
+  # t_invert = inverse temperature (1/τ) for softmax soft-WTA
+  # Higher = sharper competition (approaches hard WTA); lower = softer
+  t_invert: 5.0       # Typical: 1-10
+  eta: 0.01            # Hebbian learning rate (typical: 0.001-0.1)
+
   # Training parameters
-  n_epochs: 10  # Number of training epochs
-  batch_size: 128  # Batch size for training
-  
+  n_epochs: 10
+  batch_size: 128
+
   # Device
-  device: "cuda"  # cuda or cpu
+  device: "cuda"
+
+# Binarization (done internally via top-k on softmax output)
+binarization_method: "none"
 
 # Evaluation configuration
 eval_clustering: true

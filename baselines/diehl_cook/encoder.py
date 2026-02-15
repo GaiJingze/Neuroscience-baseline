@@ -47,7 +47,10 @@ class DiehlCookEncoder(BaseEncoder):
         
         # Training parameters
         self.n_train_samples = config.get('n_train_samples', None)  # None = use all
-        
+
+        # Binarization (can be overridden by pipeline config)
+        self.binarization_percent = config.get('binarization_percent', 0.05)
+
         # Device support
         try:
             import torch
@@ -87,7 +90,7 @@ class DiehlCookEncoder(BaseEncoder):
             reset=-60.0,  # Reset potential
             thresh=self.thresh,
             refrac=self.refrac,
-            decay=1e-2,  # Membrane time constant
+            tc_decay=100.0,  # Membrane time constant (ms)
             trace_tc=5e-2,  # Trace time constant
             theta_plus=0.05,  # Adaptive threshold increment
             tc_theta_decay=1e7,  # Adaptive threshold decay
@@ -100,7 +103,7 @@ class DiehlCookEncoder(BaseEncoder):
             rest=-60.0,
             reset=-45.0,
             thresh=-40.0,
-            decay=1e-1,
+            tc_decay=10.0,  # Membrane time constant (ms)
             refrac=2,
             trace_tc=5e-2,
         )
@@ -125,8 +128,8 @@ class DiehlCookEncoder(BaseEncoder):
         )
         network.add_connection(input_exc_conn, source="Input", target="Excitatory")
         
-        # Excitatory -> Inhibitory (one-to-one)
-        w = torch.eye(self.n_neurons)
+        # Excitatory -> Inhibitory (one-to-one, weight=22.5)
+        w = 22.5 * torch.eye(self.n_neurons)
         exc_inh_conn = Connection(
             source=exc_layer,
             target=inh_layer,
@@ -137,7 +140,8 @@ class DiehlCookEncoder(BaseEncoder):
         network.add_connection(exc_inh_conn, source="Excitatory", target="Inhibitory")
         
         # Inhibitory -> Excitatory (all-to-all except diagonal, lateral inhibition)
-        w = 10.4 * (torch.ones(self.n_neurons, self.n_neurons) - torch.diag(torch.ones(self.n_neurons)))
+        # Weights must be NEGATIVE for inhibition (official default: -17.5)
+        w = -17.5 * (torch.ones(self.n_neurons, self.n_neurons) - torch.diag(torch.ones(self.n_neurons)))
         inh_exc_conn = Connection(
             source=inh_layer,
             target=exc_layer,
@@ -336,8 +340,8 @@ class DiehlCookEncoder(BaseEncoder):
         # Pre-code is the spike counts
         pre_code = spike_counts
         
-        # Binarization: Top-k (5% sparsity by default)
-        k = max(int(self.n_neurons * 0.05), 1)
+        # Binarization: Top-k% sparsity (configurable, default 5%)
+        k = max(int(self.n_neurons * self.binarization_percent), 1)
         code = self._top_k_binarization(pre_code, k)
         
         print(f"✅ Encoding complete!")

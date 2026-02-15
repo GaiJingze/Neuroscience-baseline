@@ -1,4 +1,5 @@
 # Diehl & Cook (2015) STDP baseline configuration
+# Reference: BindsNET DiehlAndCook2015 model (bindsnet/models/models.py)
 
 # Experiment settings
 experiment_name: "diehl_cook_mnist"
@@ -12,26 +13,29 @@ data_root: "./data"
 # Encoder
 encoder: "diehl_cook"
 encoder_config:
-  input_dim: 784
-  n_neurons: 400  # Excitatory neurons
-  simulation_time: 350  # ms
-  dt: 1.0  # ms
-  
-  # LIF neuron parameters
-  thresh: -52.0  # mV
-  rest: -65.0  # mV
-  refrac: 5  # ms
-  
-  # STDP parameters
-  nu: [1.0e-4, 1.0e-2]  # Learning rates [pre, post]
-  
-  # Training
-  n_train_samples: null  # null = use all training samples
+  input_dim: 784            # Auto-overridden by pipeline to match dataset dim
+  n_neurons: 400            # Excitatory neurons
 
-# Feature extraction
-binarization_method: "top_k_percent"
-binarization_params:
-  percent: 0.05  # 5% sparsity
+  simulation_time: 350      # ms per sample
+  dt: 1.0                   # ms
+
+  # LIF neuron parameters (matching BindsNET official defaults)
+  thresh: -52.0             # mV
+  rest: -65.0               # mV
+  refrac: 5                 # ms
+
+  # STDP parameters
+  nu: [1.0e-4, 1.0e-2]     # Learning rates [pre, post]
+
+  # Training
+  n_train_samples: null     # null = use all training samples
+
+  # Binarization (encoder-internal, applied to spike counts)
+  binarization_percent: 0.05  # 5% sparsity
+
+# Pipeline-level binarization override (applied AFTER encoder binarization)
+# Set to "none" to rely solely on the encoder's internal binarization.
+binarization_method: "none"
 
 # Evaluation
 eval_clustering: true
@@ -45,7 +49,7 @@ clustering_methods:
   - spectral
 
 # Hardware
-device: "cuda"  # BindsNET benefits from GPU
+device: "cuda"              # BindsNET benefits from GPU
 
 # Logging
 verbose: true

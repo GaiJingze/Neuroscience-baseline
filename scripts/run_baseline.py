@@ -68,6 +68,29 @@ def get_encoder(name: str, config: dict):
     return encoders[name](config)
 
 
+def _apply_binarization(pre_code: np.ndarray, config: dict) -> np.ndarray:
+    """Apply pipeline-level binarization if configured.
+
+    Returns binarized code, or None if no binarization is configured.
+    """
+    method = config.get('binarization_method')
+    if not method or method == 'none':
+        return None
+    params = config.get('binarization_params', {})
+    if method == 'top_k':
+        k = params.get('k')
+        if k is None:
+            raise ValueError("binarization_method='top_k' requires binarization_params.k")
+        return top_k_binarization(pre_code, k)
+    elif method == 'top_k_percent':
+        percent = params.get('percent')
+        if percent is None:
+            raise ValueError("binarization_method='top_k_percent' requires binarization_params.percent")
+        return top_k_percent_binarization(pre_code, percent)
+    else:
+        raise ValueError(f"Unknown binarization_method: {method}")
+
+
 def preprocess_data(data: np.ndarray, dataset_name: str, encoder_name: str) -> np.ndarray:
     """
     Preprocess data based on dataset and encoder requirements.
@@ -211,6 +234,16 @@ def main(args):
     logger.log(f"\n  Eval modes: clustering={do_clustering}, retrieval={do_retrieval}")
     logger.log(f"  Has labels: {has_labels}, Has query_data: {has_query_data}, Has groundtruth: {has_groundtruth}")
     
+    # ---- Auto-set input_dim and device from dataset / top-level config ----
+    actual_dim = dataset['train_data'].shape[1]
+    if config['encoder_config'].get('input_dim') and config['encoder_config']['input_dim'] != actual_dim:
+        logger.log(f"  WARNING: encoder_config.input_dim={config['encoder_config']['input_dim']} "
+                    f"!= dataset dim={actual_dim}. Overriding to {actual_dim}.")
+    config['encoder_config']['input_dim'] = actual_dim
+
+    if config.get('device') and 'device' not in config['encoder_config']:
+        config['encoder_config']['device'] = config['device']
+
     # Initialize encoder
     logger.log("\n[2/5] Initializing encoder...")
     encoder = get_encoder(
@@ -245,15 +278,11 @@ def main(args):
         pre_code = encoded['pre_code']
         code = encoded['code']
         
-        # Apply additional binarization if needed
-        if config.get('binarization_method') and config['binarization_method'] != 'none':
+        # Apply additional binarization if configured
+        binarized = _apply_binarization(pre_code, config)
+        if binarized is not None:
             logger.log(f"  Applying {config['binarization_method']} binarization...")
-            if config['binarization_method'] == 'top_k':
-                k = config['binarization_params']['k']
-                code = top_k_binarization(pre_code, k)
-            elif config['binarization_method'] == 'top_k_percent':
-                percent = config['binarization_params']['percent']
-                code = top_k_percent_binarization(pre_code, percent)
+            code = binarized
         
         # Save codes
         if config.get('save_codes', True):
@@ -309,7 +338,12 @@ def main(args):
             # Explicit query data + groundtruth (SIFT1M, GloVe)
             logger.log("    Mode: explicit query_data + groundtruth")
             query_encoded = encoder.encode(dataset['query_data'])
+            query_pre = query_encoded['pre_code']
             query_code = query_encoded['code']
+            # Apply the same pipeline binarization to query codes for consistency
+            binarized = _apply_binarization(query_pre, config)
+            if binarized is not None:
+                query_code = binarized
             database_code = code
             groundtruth = dataset['groundtruth']
 
@@ -319,8 +353,13 @@ def main(args):
             logger.log("    Mode: label-based retrieval (database=train, queries=test)")
             logger.log("    Encoding train_data as retrieval database...")
             train_encoded = encoder.encode(dataset['train_data'])
+            train_pre = train_encoded['pre_code']
             database_code = train_encoded['code']
-            query_code = code  # test_data already encoded
+            # Apply the same pipeline binarization to database codes for consistency
+            binarized = _apply_binarization(train_pre, config)
+            if binarized is not None:
+                database_code = binarized
+            query_code = code  # test_data already encoded + binarized above
             # Build groundtruth from labels
             groundtruth = build_label_groundtruth(
                 dataset['test_labels'], dataset['train_labels'],
