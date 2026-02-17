@@ -57,7 +57,7 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
         n=n_neurons,
         traces=True,
         rest=-65.0,
-        reset=-60.0,
+        reset=-65.0,  # Must equal rest per Diehl & Cook 2015
         thresh=-52.0,
         refrac=5,
         tc_decay=100.0,  # Membrane time constant (ms)

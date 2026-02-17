@@ -87,7 +87,7 @@ class DiehlCookEncoder(BaseEncoder):
             n=self.n_neurons,
             traces=True,
             rest=self.rest,
-            reset=-60.0,  # Reset potential
+            reset=-65.0,  # Reset potential (must equal rest per Diehl & Cook 2015)
             thresh=self.thresh,
             refrac=self.refrac,
             tc_decay=100.0,  # Membrane time constant (ms)
