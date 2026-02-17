@@ -152,7 +152,12 @@ class DiehlCookEncoder(BaseEncoder):
         network.add_connection(inh_exc_conn, source="Inhibitory", target="Excitatory")
         
         # Add spike monitors for Excitatory layer
-        exc_monitor = Monitor(exc_layer, state_vars=["s", "v"], time=int(self.simulation_time * 1.5))
+        # NOTE: time must be None (dynamic append mode). When time=N is set,
+        # BindsNET initializes recording as [[] for _ in range(N)] and uses a
+        # sliding-window (append + pop(0)). If the simulation runs for fewer
+        # than N steps, the leftover empty lists cause torch.cat to crash in
+        # Monitor.get() with "expected Tensor … but got list".
+        exc_monitor = Monitor(exc_layer, state_vars=["s"])
         network.add_monitor(exc_monitor, name="ExcitatoryMonitor")
         
         return network

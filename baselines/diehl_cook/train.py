@@ -121,8 +121,8 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
     )
     network.add_connection(inh_exc_conn, source="Inhibitory", target="Excitatory")
     
-    # Add spike monitors
-    exc_monitor = Monitor(exc_layer, state_vars=["s", "v"], time=500)
+    # Add spike monitors (time=None avoids sliding-window empty-list bug)
+    exc_monitor = Monitor(exc_layer, state_vars=["s"])
     network.add_monitor(exc_monitor, name="ExcitatoryMonitor")
     
     return network
