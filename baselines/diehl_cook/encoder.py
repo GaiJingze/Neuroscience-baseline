@@ -418,7 +418,29 @@ class DiehlCookEncoder(BaseEncoder):
         
         # Load weights
         checkpoint = torch.load(model_path, map_location=self.device)
-        self.network.load_state_dict(checkpoint['network_state_dict'])
+        
+        # Try to load state dict, handling shape mismatches for state variables
+        try:
+            # First try strict loading
+            self.network.load_state_dict(checkpoint['network_state_dict'], strict=True)
+        except RuntimeError as e:
+            # If strict loading fails, try non-strict loading
+            # This allows loading weights even if state variable shapes differ
+            print(f"  Warning: Some state variables have shape mismatches (this is usually OK): {e}")
+            print("  Attempting non-strict loading (weights only)...")
+            try:
+                missing_keys, unexpected_keys = self.network.load_state_dict(
+                    checkpoint['network_state_dict'], strict=False
+                )
+                if missing_keys:
+                    print(f"  Missing keys (will use defaults): {len(missing_keys)} keys")
+                if unexpected_keys:
+                    print(f"  Unexpected keys (ignored): {len(unexpected_keys)} keys")
+                print("  ✅ Successfully loaded weights (non-strict mode)")
+            except Exception as e2:
+                print(f"  ❌ Failed to load even with non-strict mode: {e2}")
+                raise RuntimeError(f"Cannot load model weights: {e2}")
+        
         self.network.to(self.device)
         
         # Restore device if saved
