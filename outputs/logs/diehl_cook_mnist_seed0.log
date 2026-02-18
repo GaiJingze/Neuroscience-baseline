@@ -1,0 +1,102 @@
+================================================================================
+Experiment: diehl_cook_mnist
+Encoder: diehl_cook
+Dataset: mnist
+Seed: 0
+================================================================================
+
+[1/5] Loading dataset...
+  Train samples: 60000
+  Test samples: 10000
+
+  Eval modes: clustering=True, retrieval=True
+  Has labels: True, Has query_data: False, Has groundtruth: False
+
+[2/5] Initializing encoder...
+  Encoder: DiehlCookEncoder(trained=False)
+
+[3/5] Training encoder...
+================================================================================
+Experiment: diehl_cook_mnist
+Encoder: diehl_cook
+Dataset: mnist
+Seed: 0
+================================================================================
+
+[1/5] Loading dataset...
+  Train samples: 60000
+  Test samples: 10000
+
+  Eval modes: clustering=True, retrieval=True
+  Has labels: True, Has query_data: False, Has groundtruth: False
+
+[2/5] Initializing encoder...
+  Encoder: DiehlCookEncoder(trained=False)
+
+[3/5] Training encoder...
+
+[4/5] Encoding test data...
+  Running encoder...
+================================================================================
+Experiment: diehl_cook_mnist
+Encoder: diehl_cook
+Dataset: mnist
+Seed: 0
+================================================================================
+
+[1/5] Loading dataset...
+  Train samples: 60000
+  Test samples: 10000
+
+  Eval modes: clustering=True, retrieval=True
+  Has labels: True, Has query_data: False, Has groundtruth: False
+
+[2/5] Initializing encoder...
+  Encoder: DiehlCookEncoder(trained=False)
+
+[3/5] Training encoder...
+================================================================================
+Experiment: diehl_cook_mnist
+Encoder: diehl_cook
+Dataset: mnist
+Seed: 0
+================================================================================
+
+[1/5] Loading dataset...
+  Train samples: 60000
+  Test samples: 10000
+
+  Eval modes: clustering=True, retrieval=True
+  Has labels: True, Has query_data: False, Has groundtruth: False
+
+[2/5] Initializing encoder...
+  Encoder: DiehlCookEncoder(trained=False)
+
+[3/5] Training encoder...
+  ✅ Model saved to outputs/codes/diehl_cook/mnist/model_seed0.pkl (after training)
+
+[4/5] Encoding test data...
+  Running encoder...
+================================================================================
+Experiment: diehl_cook_mnist
+Encoder: diehl_cook
+Dataset: mnist
+Seed: 0
+================================================================================
+
+[1/5] Loading dataset...
+  Train samples: 60000
+  Test samples: 10000
+
+  Eval modes: clustering=True, retrieval=True
+  Has labels: True, Has query_data: False, Has groundtruth: False
+
+[2/5] Initializing encoder...
+  Encoder: DiehlCookEncoder(trained=False)
+  Found saved model at outputs/codes/diehl_cook/mnist/model_seed0.pkl, loading...
+  ⚠️  Failed to load model: Error(s) in loading state_dict for Network:
+	size mismatch for Input.s: copying a param with shape torch.Size([1, 784]) from checkpoint, the shape in current model is torch.Size([1, 1, 1, 784]).
+	size mismatch for Input_to_Excitatory.source.s: copying a param with shape torch.Size([1, 784]) from checkpoint, the shape in current model is torch.Size([1, 1, 1, 784]).
+  Will retrain from scratch...
+
+[3/5] Training encoder...
