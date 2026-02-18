@@ -24,6 +24,11 @@ encoder_config:
   rest: -65.0               # mV
   refrac: 5                 # ms
 
+  # Poisson encoding intensity — BindsNET interprets datum as Hz firing
+  # rates.  [0,1] images × intensity → [0, intensity] Hz.  128 is the
+  # standard default from the official BindsNET eth_mnist example.
+  intensity: 128.0
+
   # STDP parameters
   nu: [1.0e-4, 1.0e-2]     # Learning rates [pre, post]
 

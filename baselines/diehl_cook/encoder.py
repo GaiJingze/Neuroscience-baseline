@@ -48,6 +48,14 @@ class DiehlCookEncoder(BaseEncoder):
         # Training parameters
         self.n_train_samples = config.get('n_train_samples', None)  # None = use all
 
+        # Poisson encoding intensity: BindsNET's poisson() interprets datum
+        # values as firing rates in Hz (inter-spike interval = 1/datum * 1000/dt).
+        # With [0,1]-normalised images the max rate is 1 Hz → ~0.35 spikes per
+        # 350 ms simulation, i.e. the network is essentially silent.
+        # The standard BindsNET eth_mnist example multiplies by intensity=128
+        # so that pixel values become [0,128] Hz → ~45 spikes per bright pixel.
+        self.intensity = config.get('intensity', 128.0)
+
         # Binarization (can be overridden by pipeline config)
         self.binarization_percent = config.get('binarization_percent', 0.05)
 
@@ -79,8 +87,12 @@ class DiehlCookEncoder(BaseEncoder):
         # Create network
         network = Network(dt=self.dt)
         
-        # Input layer with traces for STDP
-        input_layer = Input(n=self.input_dim, shape=(1, 1, self.input_dim), traces=True)
+        # Input layer with traces for STDP.
+        # NOTE: Do NOT pass shape=(1, 1, N) — that creates 4-D state variables
+        # (e.g. Input.s → [1,1,1,N]) which causes size-mismatch errors when
+        # loading a saved state_dict.  Omitting `shape` keeps the default flat
+        # layout that matches BindsNET's standard examples.
+        input_layer = Input(n=self.input_dim, traces=True)
         
         # Excitatory layer with adaptive threshold
         exc_layer = LIFNodes(
@@ -185,6 +197,7 @@ class DiehlCookEncoder(BaseEncoder):
         print(f"{'='*70}")
         print(f"Architecture: {self.input_dim} -> {self.n_neurons} neurons")
         print(f"Simulation time: {self.simulation_time} ms")
+        print(f"Poisson intensity: {self.intensity}")
         print(f"Device: {self.device}")
         print(f"{'='*70}\n")
         
@@ -203,12 +216,15 @@ class DiehlCookEncoder(BaseEncoder):
         
         print(f"Training on {n_samples} samples...")
         
-        # Normalize input data to [0, 1] range
+        # Normalize to [0, 1], then scale by intensity so that BindsNET's
+        # poisson() sees values in [0, intensity] Hz — producing meaningful
+        # Poisson spike trains (e.g. intensity=128 → up to ~45 spikes / 350 ms).
         train_data_normalized = train_data.copy()
         if train_data_normalized.max() > 1.0:
             train_data_normalized = train_data_normalized / 255.0
         train_data_normalized = np.clip(train_data_normalized, 0.0, 1.0)
-        
+        train_data_normalized = train_data_normalized * self.intensity
+
         # Time tracking
         import time
         start_time = time.time()
@@ -304,11 +320,12 @@ class DiehlCookEncoder(BaseEncoder):
         n_samples = len(data)
         spike_counts = np.zeros((n_samples, self.n_neurons))
         
-        # Normalize input data to [0, 1] range
+        # Normalize to [0, 1], then scale by intensity (same as fit).
         data_normalized = data.copy()
         if data_normalized.max() > 1.0:
             data_normalized = data_normalized / 255.0
         data_normalized = np.clip(data_normalized, 0.0, 1.0)
+        data_normalized = data_normalized * self.intensity
         
         # Extract spike counts for each sample
         for i, image in enumerate(data_normalized):
@@ -335,9 +352,11 @@ class DiehlCookEncoder(BaseEncoder):
             inputs = {"Input": encoded}
             self.network.run(inputs=inputs, time=int(self.simulation_time))
             
-            # Extract spike counts from monitor
+            # Extract spike counts from monitor.
+            # spikes shape: [time_steps, n_neurons] (may have extra dims).
             spikes = self.network.monitors["ExcitatoryMonitor"].get("s")
-            spike_counts[i] = torch.sum(spikes, dim=0).cpu().numpy()
+            counts = torch.sum(spikes, dim=0).cpu().numpy().flatten()
+            spike_counts[i] = counts[:self.n_neurons]
             
             # Reset network state for next sample
             self.network.reset_state_variables()

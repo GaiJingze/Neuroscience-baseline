@@ -49,8 +49,9 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
     
     network = Network(dt=dt)
     
-    # Input layer
-    input_layer = Input(n=n_input, shape=(1, 1, n_input), traces=True)
+    # Input layer (flat shape — do NOT use shape=(1,1,N) which creates 4-D
+    # state variables and breaks state_dict loading)
+    input_layer = Input(n=n_input, traces=True)
     
     # Excitatory layer with adaptive threshold
     exc_layer = LIFNodes(
@@ -128,10 +129,11 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
     return network
 
 
-def train_network(network, train_data, train_labels, n_epochs=1, time=350, device="cpu"):
+def train_network(network, train_data, train_labels, n_epochs=1, time=350,
+                   device="cpu", intensity=128.0):
     """
     Train the Diehl & Cook network on data.
-    
+
     Args:
         network: BindsNET Network
         train_data: Training images (n_samples, 784)
@@ -139,27 +141,28 @@ def train_network(network, train_data, train_labels, n_epochs=1, time=350, devic
         n_epochs: Number of training epochs
         time: Simulation time per sample (ms)
         device: 'cpu' or 'cuda'
+        intensity: Poisson encoding intensity (Hz scaling factor)
     """
     network.to(device)
-    
+
     n_samples = len(train_data)
     print(f"Training on {n_samples} samples for {n_epochs} epoch(s)...")
-    
+
     for epoch in range(n_epochs):
         print(f"\nEpoch {epoch+1}/{n_epochs}")
-        
+
         for i, (image, label) in enumerate(zip(train_data, train_labels)):
             if (i + 1) % 100 == 0:
                 print(f"  Sample {i+1}/{n_samples} (label={label})")
-            
-            # Ensure image is in [0, 1] range
+
+            # Normalise to [0, 1] then scale by intensity so BindsNET's
+            # poisson() sees Hz-level firing rates (not sub-Hz).
             image = torch.from_numpy(image).float()
             if image.max() > 1.0:
                 image = image / 255.0
-            
+            image = image * intensity
+
             # Encode as Poisson spike train
-            # Note: This is a simplified encoding
-            # Real implementation would generate spike trains
             encoded = poisson(datum=image, time=int(time), dt=network.dt)
             
             # Clamp input and run simulation
@@ -174,51 +177,54 @@ def train_network(network, train_data, train_labels, n_epochs=1, time=350, devic
     return network
 
 
-def extract_spike_counts(network, test_data, time=350, device="cpu"):
+def extract_spike_counts(network, test_data, time=350, device="cpu",
+                          intensity=128.0):
     """
     Extract spike counts from trained network.
-    
+
     Args:
         network: Trained BindsNET Network
         test_data: Test images (n_samples, 784)
         time: Simulation time per sample (ms)
         device: 'cpu' or 'cuda'
-    
+        intensity: Poisson encoding intensity (Hz scaling factor)
+
     Returns:
         Spike count matrix (n_samples, n_neurons)
     """
     network.to(device)
     network.train(mode=False)  # Disable learning
-    
+
     n_samples = len(test_data)
     n_neurons = network.layers["Excitatory"].n
     spike_counts = np.zeros((n_samples, n_neurons))
-    
+
     print(f"Extracting spike counts from {n_samples} samples...")
-    
+
     for i, image in enumerate(test_data):
         if (i + 1) % 100 == 0:
             print(f"  Sample {i+1}/{n_samples}")
-        
-        # Prepare image
+
+        # Prepare image — same normalisation + intensity scaling as training
         image = torch.from_numpy(image).float()
         if image.max() > 1.0:
             image = image / 255.0
-        
+        image = image * intensity
+
         # Encode
         encoded = poisson(datum=image, time=int(time), dt=network.dt)
-        
+
         # Run simulation
         inputs = {"Input": encoded}
         network.run(inputs=inputs, time=int(time))
-        
+
         # Get spike counts
         spikes = network.monitors["ExcitatoryMonitor"].get("s")
-        spike_counts[i] = torch.sum(spikes, dim=0).cpu().numpy()
-        
+        spike_counts[i] = torch.sum(spikes, dim=0).cpu().numpy().flatten()[:n_neurons]
+
         # Reset
         network.reset_state_variables()
-    
+
     return spike_counts
 
 
