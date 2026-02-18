@@ -256,22 +256,18 @@ class DiehlCookEncoder(BaseEncoder):
                 print(f"  Sample {i+1}/{n_samples} ({progress:.1f}%){label_str}{time_str}{eta_str}")
                 last_print_time = current_time
             
-            # Convert to torch tensor and move to device
-            image_tensor = torch.from_numpy(image).float().to(self.device)
-            
-            # Encode as Poisson spike train
+            # Poisson encoding on CPU (BindsNET's poisson() creates internal
+            # tensors on CPU, so datum must also be on CPU).
+            image_tensor = torch.from_numpy(image).float()
             encoded = poisson(
                 datum=image_tensor,
                 time=int(self.simulation_time),
                 dt=self.dt
             )
-            # Ensure encoded spikes are on the correct device
+            # Move encoded spikes to network device
             if isinstance(encoded, torch.Tensor):
                 encoded = encoded.to(self.device)
-            elif isinstance(encoded, dict):
-                encoded = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
-                          for k, v in encoded.items()}
-            
+
             # Run network simulation (STDP updates happen automatically)
             inputs = {"Input": encoded}
             self.network.run(inputs=inputs, time=int(self.simulation_time))
@@ -332,22 +328,16 @@ class DiehlCookEncoder(BaseEncoder):
             if (i + 1) % 100 == 0:
                 print(f"  Sample {i+1}/{n_samples}")
             
-            # Convert to torch tensor and move to device
-            image_tensor = torch.from_numpy(image).float().to(self.device)
-            
-            # Encode as Poisson spike train
+            # Poisson encoding on CPU (same reason as fit()).
+            image_tensor = torch.from_numpy(image).float()
             encoded = poisson(
                 datum=image_tensor,
                 time=int(self.simulation_time),
                 dt=self.dt
             )
-            # Ensure encoded spikes are on the correct device
             if isinstance(encoded, torch.Tensor):
                 encoded = encoded.to(self.device)
-            elif isinstance(encoded, dict):
-                encoded = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
-                          for k, v in encoded.items()}
-            
+
             # Run simulation
             inputs = {"Input": encoded}
             self.network.run(inputs=inputs, time=int(self.simulation_time))
