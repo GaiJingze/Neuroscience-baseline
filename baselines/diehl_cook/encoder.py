@@ -74,7 +74,7 @@ class DiehlCookEncoder(BaseEncoder):
         try:
             import torch
             from bindsnet.network import Network
-            from bindsnet.network.nodes import Input, LIFNodes
+            from bindsnet.network.nodes import Input, LIFNodes, DiehlAndCookNodes
             from bindsnet.network.topology import Connection
             from bindsnet.learning import PostPre
             from bindsnet.network.monitors import Monitor
@@ -94,8 +94,13 @@ class DiehlCookEncoder(BaseEncoder):
         # layout that matches BindsNET's standard examples.
         input_layer = Input(n=self.input_dim, traces=True)
         
-        # Excitatory layer with adaptive threshold
-        exc_layer = LIFNodes(
+        # Excitatory layer with adaptive threshold.
+        # MUST use DiehlAndCookNodes (not LIFNodes) — only DiehlAndCookNodes
+        # implements the adaptive threshold (theta) that is essential for
+        # homeostatic regulation during STDP training.  Without theta, a few
+        # neurons monopolise the WTA competition and STDP never learns
+        # diverse receptive fields, giving NMI ≈ 0 on MNIST.
+        exc_layer = DiehlAndCookNodes(
             n=self.n_neurons,
             traces=True,
             rest=self.rest,
@@ -358,8 +363,20 @@ class DiehlCookEncoder(BaseEncoder):
         k = max(int(self.n_neurons * self.binarization_percent), 1)
         code = self._top_k_binarization(pre_code, k)
         
+        # Diagnostic: spike count statistics (helps verify network health)
+        total = pre_code.sum(axis=1)  # total spikes per sample
+        print(f"  Spike stats — mean: {total.mean():.1f}, "
+              f"median: {np.median(total):.1f}, "
+              f"max: {total.max():.0f}, "
+              f"zero-samples: {(total == 0).sum()}/{n_samples}")
+        active = (pre_code > 0).sum(axis=1)  # active neurons per sample
+        print(f"  Active neurons/sample — mean: {active.mean():.1f}, "
+              f"median: {np.median(active):.0f}")
+        unique_codes = len(np.unique(code, axis=0))
+        print(f"  Unique binary codes: {unique_codes}/{n_samples}")
+
         print(f"✅ Encoding complete!")
-        
+
         return {
             'pre_code': pre_code,
             'code': code

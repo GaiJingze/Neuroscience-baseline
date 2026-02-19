@@ -20,7 +20,7 @@ from pipeline.utils import set_seed
 # Try to import BindsNET
 try:
     from bindsnet.network import Network
-    from bindsnet.network.nodes import Input, LIFNodes
+    from bindsnet.network.nodes import Input, LIFNodes, DiehlAndCookNodes
     from bindsnet.network.topology import Connection
     from bindsnet.learning import PostPre
     from bindsnet.network.monitors import Monitor
@@ -53,8 +53,8 @@ def build_diehl_cook_network(n_input=784, n_neurons=400, dt=1.0, nu=(1e-4, 1e-2)
     # state variables and breaks state_dict loading)
     input_layer = Input(n=n_input, traces=True)
     
-    # Excitatory layer with adaptive threshold
-    exc_layer = LIFNodes(
+    # Excitatory layer — MUST use DiehlAndCookNodes for adaptive threshold
+    exc_layer = DiehlAndCookNodes(
         n=n_neurons,
         traces=True,
         rest=-65.0,
