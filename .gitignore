@@ -46,16 +46,20 @@ data/glove/
 *.bvecs
 
 # Outputs
-outputs/
+# Ignore model files in codes directory
+outputs/codes/
 *.npy
-*.pkl
-*.pt
-*.pth
-*.log
+outputs/codes/**/*.pkl
+outputs/codes/**/*.pt
+outputs/codes/**/*.pth
+# Allow benchmark and logs directories
+!outputs/benchmark/
+!outputs/logs/
 
 # Experiment results
 results/
 logs/
+!outputs/logs/
 wandb/
 
 # OS

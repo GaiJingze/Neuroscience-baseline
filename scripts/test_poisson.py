@@ -21,5 +21,7 @@ for intensity in [0.1, 0.5, 1.0, 10.0, 100.0, 255.0]:
     print(f"  Neurons active: {(encoded.sum(dim=0) > 0).sum().item()}/784")
 
 print("\n" + "="*80)
-print("Recommended: Input data should be scaled to 0-255 range for Poisson encoding")
+print("BindsNET poisson() interprets datum as Hz firing rates.")
+print("Normalised [0,1] images should be scaled by intensity (default 128)")
+print("so that pixel values become [0, intensity] Hz before encoding.")
 print("="*80)
