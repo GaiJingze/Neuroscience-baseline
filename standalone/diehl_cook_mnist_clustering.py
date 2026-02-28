@@ -399,7 +399,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Diehl & Cook STDP → MNIST Clustering (standalone)")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cpu",
+    parser.add_argument("--device", type=str,
+                        default="cuda" if torch.cuda.is_available() else "cpu",
                         choices=["cpu", "cuda"])
     parser.add_argument("--data_root", type=str, default="./data")
 
@@ -419,9 +420,11 @@ def main():
     parser.add_argument("--rest", type=float, default=-65.0,
                         help="Excitatory neuron resting potential (mV)")
 
-    # Training
+    # Training / evaluation subset
     parser.add_argument("--n_train", type=int, default=None,
                         help="Number of training samples (None = all 60000)")
+    parser.add_argument("--n_test", type=int, default=None,
+                        help="Number of test samples (None = all 10000)")
 
     # Binarization
     parser.add_argument("--binarize_percent", type=float, default=0.05,
@@ -445,6 +448,11 @@ def main():
         train_data = train_data[:args.n_train]
         train_labels = train_labels[:args.n_train]
         print(f"[data] Subsampled to {args.n_train} training samples")
+
+    if args.n_test is not None:
+        test_data = test_data[:args.n_test]
+        test_labels = test_labels[:args.n_test]
+        print(f"[data] Subsampled to {args.n_test} test samples")
 
     # --- 2. Build network ---
     print(f"\n[net] Building Diehl & Cook SNN  "
