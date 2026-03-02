@@ -1,0 +1,42 @@
+# Diehl & Cook "<2h" profile for standalone MNIST clustering
+# Goal: keep metrics reasonable while cutting runtime substantially.
+
+experiment_name: "diehl_cook_mnist_under2h"
+seed: 0
+output_dir: "./outputs"
+
+dataset: "mnist"
+data_root: "./data"
+
+encoder: "diehl_cook"
+encoder_config:
+  input_dim: 784
+
+  # ↓ Runtime-critical knobs
+  n_neurons: 256            # 400 -> 256: lower compute but still enough capacity
+  simulation_time: 200      # 350 -> 200 ms per sample
+  dt: 1.0
+
+  # Keep dynamics aligned with official-style defaults
+  thresh: -52.0
+  rest: -65.0
+  refrac: 5
+  intensity: 128.0
+  nu: [1.0e-4, 1.0e-2]
+
+  # Full 60k is usually too slow for <2h; use 20k as balanced setting.
+  n_train_samples: 20000
+
+  # Keep sparsity identical to main baseline
+  binarization_percent: 0.05
+
+# Kept for compatibility with pipeline usage
+binarization_method: "none"
+
+# Standalone script reads this for clustering eval
+n_clusters: 10
+
+device: "cuda"
+verbose: true
+save_codes: true
+save_model: true
