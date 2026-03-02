@@ -20,9 +20,10 @@ Pipeline:
     6. Cluster with K-Means (k = 10) and evaluate NMI / ARI / ACC
 
 Usage:
-    python standalone/diehl_cook_mnist_clustering.py              # full 60 000 train
+    python standalone/diehl_cook_mnist_clustering.py              # uses configs/diehl_cook_under2h.yaml
     python standalone/diehl_cook_mnist_clustering.py --n_train 1000  # quick test
     python standalone/diehl_cook_mnist_clustering.py --device cuda   # GPU
+    python standalone/diehl_cook_mnist_clustering.py --config configs/diehl_cook.yaml
 
 Requirements:
     pip install torch torchvision numpy scikit-learn scipy
@@ -32,9 +33,11 @@ Requirements:
 import argparse
 import random
 import time
+from pathlib import Path
 
 import numpy as np
 import torch
+import yaml
 from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import KMeans
 from sklearn.metrics import (
@@ -51,6 +54,34 @@ from bindsnet.network import Network
 from bindsnet.network.monitors import Monitor
 from bindsnet.network.nodes import DiehlAndCookNodes, Input, LIFNodes
 from bindsnet.network.topology import Connection
+
+
+def load_standalone_config(config_path: str) -> dict:
+    """Load standalone defaults from a Diehl & Cook YAML config file."""
+    path = Path(config_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+
+    with path.open("r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+
+    enc_cfg = cfg.get("encoder_config", {})
+
+    return {
+        "seed": cfg.get("seed", 0),
+        "device": cfg.get("device", "cpu"),
+        "data_root": cfg.get("data_root", "./data"),
+        "n_neurons": enc_cfg.get("n_neurons", 400),
+        "sim_time": enc_cfg.get("simulation_time", 350),
+        "intensity": enc_cfg.get("intensity", 128.0),
+        "nu_pre": enc_cfg.get("nu", [1e-4, 1e-2])[0],
+        "nu_post": enc_cfg.get("nu", [1e-4, 1e-2])[1],
+        "thresh": enc_cfg.get("thresh", -52.0),
+        "rest": enc_cfg.get("rest", -65.0),
+        "n_train": enc_cfg.get("n_train_samples", None),
+        "binarize_percent": enc_cfg.get("binarization_percent", 0.05),
+        "n_clusters": cfg.get("n_clusters", 10),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -396,39 +427,51 @@ def evaluate_clustering(codes: np.ndarray, labels_true: np.ndarray,
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def main():
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument(
+        "--config",
+        type=str,
+        default="configs/diehl_cook_under2h.yaml",
+        help="Path to YAML config file with defaults",
+    )
+    pre_args, _ = pre_parser.parse_known_args()
+    config_defaults = load_standalone_config(pre_args.config)
+
     parser = argparse.ArgumentParser(
         description="Diehl & Cook STDP → MNIST Clustering (standalone)")
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cpu",
+    parser.add_argument("--config", type=str, default=pre_args.config,
+                        help="Path to YAML config file with defaults")
+    parser.add_argument("--seed", type=int, default=config_defaults["seed"])
+    parser.add_argument("--device", type=str, default=config_defaults["device"],
                         choices=["cpu", "cuda"])
-    parser.add_argument("--data_root", type=str, default="./data")
+    parser.add_argument("--data_root", type=str, default=config_defaults["data_root"])
 
     # Network architecture
-    parser.add_argument("--n_neurons", type=int, default=400,
+    parser.add_argument("--n_neurons", type=int, default=config_defaults["n_neurons"],
                         help="Number of excitatory neurons")
-    parser.add_argument("--sim_time", type=int, default=350,
+    parser.add_argument("--sim_time", type=int, default=config_defaults["sim_time"],
                         help="Simulation time per sample (ms)")
-    parser.add_argument("--intensity", type=float, default=128.0,
+    parser.add_argument("--intensity", type=float, default=config_defaults["intensity"],
                         help="Poisson encoding intensity (Hz scaling)")
-    parser.add_argument("--nu_pre", type=float, default=1e-4,
+    parser.add_argument("--nu_pre", type=float, default=config_defaults["nu_pre"],
                         help="STDP pre-synaptic learning rate")
-    parser.add_argument("--nu_post", type=float, default=1e-2,
+    parser.add_argument("--nu_post", type=float, default=config_defaults["nu_post"],
                         help="STDP post-synaptic learning rate")
-    parser.add_argument("--thresh", type=float, default=-52.0,
+    parser.add_argument("--thresh", type=float, default=config_defaults["thresh"],
                         help="Excitatory neuron threshold (mV)")
-    parser.add_argument("--rest", type=float, default=-65.0,
+    parser.add_argument("--rest", type=float, default=config_defaults["rest"],
                         help="Excitatory neuron resting potential (mV)")
 
     # Training
-    parser.add_argument("--n_train", type=int, default=None,
+    parser.add_argument("--n_train", type=int, default=config_defaults["n_train"],
                         help="Number of training samples (None = all 60000)")
 
     # Binarization
-    parser.add_argument("--binarize_percent", type=float, default=0.05,
+    parser.add_argument("--binarize_percent", type=float, default=config_defaults["binarize_percent"],
                         help="Top-k%% binarization (default: 5%%)")
 
     # Clustering
-    parser.add_argument("--n_clusters", type=int, default=10)
+    parser.add_argument("--n_clusters", type=int, default=config_defaults["n_clusters"])
 
     args = parser.parse_args()
 
