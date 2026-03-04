@@ -1,0 +1,70 @@
+# Deep-STDP configuration
+# Reference: Sen Lu & Abhronil Sengupta, "Deep Unsupervised Learning Using
+#            Spike-Timing-Dependent Plasticity", Neuromorphic Computing and
+#            Engineering, 2024.  arXiv: 2307.04054
+#
+# Multi-layer STDP with alternating clustering (DeepCluster-style).
+# The only SNN baseline that originally reports NMI for clustering.
+
+experiment_name: "deep_stdp_mnist"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder
+encoder: "deep_stdp"
+encoder_config:
+  input_dim: 784
+
+  # Layer sizes (input -> L1 -> L2)
+  layer_sizes: [400, 200]
+
+  # Number of STDP-clustering alternation rounds per layer
+  n_rounds: 2
+
+  # K-means clusters for pseudo-label generation
+  n_clusters: 10
+
+  simulation_time: 350       # ms per sample
+  dt: 1.0
+
+  # LIF neuron parameters
+  thresh: -52.0
+  rest: -65.0
+  refrac: 5
+
+  # Poisson encoding
+  intensity: 128.0
+
+  # STDP parameters
+  nu: [1.0e-4, 1.0e-2]
+
+  # Training
+  n_train_samples: null
+
+  # Binarization
+  binarization_percent: 0.05
+
+# Pipeline binarization
+binarization_method: "none"
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: true
+n_clusters: 10
+
+clustering_methods:
+  - kmeans
+  - kmedoids
+  - spectral
+
+# Hardware
+device: "cuda"
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true

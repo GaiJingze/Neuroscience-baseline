@@ -1,0 +1,66 @@
+# LM-SNN (Lattice Map SNN) configuration
+# Reference: Hazan, Saunders et al., "Unsupervised Learning with
+#            Self-Organizing Spiking Neural Networks", IJCNN 2018
+#
+# Key difference from Diehl & Cook: topological (SOM-inspired) inhibition
+# on a 2D grid instead of uniform all-to-all lateral inhibition.
+
+experiment_name: "lm_snn_mnist"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder
+encoder: "lm_snn"
+encoder_config:
+  input_dim: 784
+  n_neurons: 400            # Must be a perfect square (grid_side^2)
+  grid_side: 20             # 20x20 = 400 neurons
+
+  simulation_time: 350      # ms per sample
+  dt: 1.0
+
+  # LIF neuron parameters
+  thresh: -52.0
+  rest: -65.0
+  refrac: 5
+
+  # Poisson encoding
+  intensity: 128.0
+
+  # STDP parameters
+  nu: [1.0e-4, 1.0e-2]
+
+  # LM-SNN specific: topological inhibition
+  inh_sigma: 5.0            # Gaussian neighbourhood radius (grid units)
+  inh_strength: -17.5       # Base inhibition weight
+
+  # Training
+  n_train_samples: null      # null = use all
+
+  # Binarization
+  binarization_percent: 0.05
+
+# Pipeline binarization (none = use encoder-internal)
+binarization_method: "none"
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: true
+n_clusters: 10
+
+clustering_methods:
+  - kmeans
+  - kmedoids
+  - spectral
+
+# Hardware
+device: "cuda"
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true
