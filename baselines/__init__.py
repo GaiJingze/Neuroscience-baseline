@@ -43,6 +43,14 @@ except ImportError:
     DEEP_STDP_AVAILABLE = False
     DeepSTDPEncoder = None
 
+# CSDP (requires PyTorch)
+try:
+    from .csdp.encoder import CSDPEncoder
+    CSDP_AVAILABLE = True
+except ImportError:
+    CSDP_AVAILABLE = False
+    CSDPEncoder = None
+
 __all__ = [
     'BaseEncoder', 'DummyEncoder',
     'FlyHashEncoder', 'SoftHebbEncoder', 'KrotovEncoder',
@@ -57,3 +65,5 @@ if LC_SNN_AVAILABLE:
     __all__.append('LCSNNEncoder')
 if DEEP_STDP_AVAILABLE:
     __all__.append('DeepSTDPEncoder')
+if CSDP_AVAILABLE:
+    __all__.append('CSDPEncoder')
