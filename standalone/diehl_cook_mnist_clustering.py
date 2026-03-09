@@ -372,8 +372,9 @@ def evaluate_clustering(codes: np.ndarray, labels_true: np.ndarray,
     ari = adjusted_rand_score(labels_true, labels_pred)
     acc = clustering_accuracy(labels_true, labels_pred)
     purity = clustering_purity(labels_true, labels_pred)
-    sil = silhouette_score(codes, labels_pred)
-    db = davies_bouldin_score(codes, labels_pred)
+    n_unique = len(set(labels_pred))
+    sil = silhouette_score(codes, labels_pred) if n_unique > 1 else 0.0
+    db = davies_bouldin_score(codes, labels_pred) if n_unique > 1 else float("inf")
 
     print(f"\n  {'Metric':<25s} {'Value':>10s}")
     print(f"  {'-'*36}")
