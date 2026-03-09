@@ -403,8 +403,9 @@ def evaluate_clustering(codes: np.ndarray, labels_true: np.ndarray,
     ari = adjusted_rand_score(labels_true, labels_pred)
     acc = clustering_accuracy(labels_true, labels_pred)
     purity = clustering_purity(labels_true, labels_pred)
-    sil = silhouette_score(codes, labels_pred)
-    db = davies_bouldin_score(codes, labels_pred)
+    n_unique = len(set(labels_pred))
+    sil = silhouette_score(codes, labels_pred) if n_unique > 1 else 0.0
+    db = davies_bouldin_score(codes, labels_pred) if n_unique > 1 else float("inf")
 
     print(f"\n  {'Metric':<25s} {'Value':>10s}")
     print(f"  {'-'*36}")
@@ -465,6 +466,8 @@ def main():
     # Training
     parser.add_argument("--n_train", type=int, default=config_defaults["n_train"],
                         help="Number of training samples (None = all 60000)")
+    parser.add_argument("--n_test", type=int, default=None,
+                        help="Number of test samples (None = all 10000)")
 
     # Binarization
     parser.add_argument("--binarize_percent", type=float, default=config_defaults["binarize_percent"],
@@ -488,6 +491,11 @@ def main():
         train_data = train_data[:args.n_train]
         train_labels = train_labels[:args.n_train]
         print(f"[data] Subsampled to {args.n_train} training samples")
+
+    if args.n_test is not None:
+        test_data = test_data[:args.n_test]
+        test_labels = test_labels[:args.n_test]
+        print(f"[data] Subsampled to {args.n_test} test samples")
 
     # --- 2. Build network ---
     print(f"\n[net] Building Diehl & Cook SNN  "

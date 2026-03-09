@@ -35,13 +35,34 @@ from baselines.wta_hash.encoder import WTAHashEncoder
 from baselines.som.encoder import SOMEncoder
 from baselines.lsh.encoder import SimHashEncoder
 
-# Diehl & Cook (optional, requires BindsNET)
+# BindsNET-based encoders (optional)
 try:
     from baselines.diehl_cook.encoder import DiehlCookEncoder
     DIEHL_COOK_AVAILABLE = True
 except ImportError:
     DIEHL_COOK_AVAILABLE = False
     DiehlCookEncoder = None
+
+try:
+    from baselines.lm_snn.encoder import LMSNNEncoder
+    LM_SNN_AVAILABLE = True
+except ImportError:
+    LM_SNN_AVAILABLE = False
+    LMSNNEncoder = None
+
+try:
+    from baselines.lc_snn.encoder import LCSNNEncoder
+    LC_SNN_AVAILABLE = True
+except ImportError:
+    LC_SNN_AVAILABLE = False
+    LCSNNEncoder = None
+
+try:
+    from baselines.deep_stdp.encoder import DeepSTDPEncoder
+    DEEP_STDP_AVAILABLE = True
+except ImportError:
+    DEEP_STDP_AVAILABLE = False
+    DeepSTDPEncoder = None
 
 
 def get_encoder(name: str, config: dict):
@@ -56,14 +77,29 @@ def get_encoder(name: str, config: dict):
         'som': SOMEncoder,
         'lsh': SimHashEncoder,
     }
-    # Add Diehl & Cook if available
+    # Add BindsNET-based encoders if available
     if DIEHL_COOK_AVAILABLE and DiehlCookEncoder is not None:
         encoders['diehl_cook'] = DiehlCookEncoder
-    
+    if LM_SNN_AVAILABLE and LMSNNEncoder is not None:
+        encoders['lm_snn'] = LMSNNEncoder
+    if LC_SNN_AVAILABLE and LCSNNEncoder is not None:
+        encoders['lc_snn'] = LCSNNEncoder
+    if DEEP_STDP_AVAILABLE and DeepSTDPEncoder is not None:
+        encoders['deep_stdp'] = DeepSTDPEncoder
+
     if name not in encoders:
         available = list(encoders.keys())
+        bindsnet_names = []
         if not DIEHL_COOK_AVAILABLE:
-            available.append('diehl_cook (requires BindsNET)')
+            bindsnet_names.append('diehl_cook')
+        if not LM_SNN_AVAILABLE:
+            bindsnet_names.append('lm_snn')
+        if not LC_SNN_AVAILABLE:
+            bindsnet_names.append('lc_snn')
+        if not DEEP_STDP_AVAILABLE:
+            bindsnet_names.append('deep_stdp')
+        if bindsnet_names:
+            available.append(f"{', '.join(bindsnet_names)} (requires BindsNET)")
         raise ValueError(f"Unknown encoder: {name}. Available: {available}")
     return encoders[name](config)
 

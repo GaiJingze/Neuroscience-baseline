@@ -1,0 +1,69 @@
+# LC-SNN (Locally Connected SNN) configuration
+# Reference: Saunders et al., "Locally Connected Spiking Neural Networks
+#            for Unsupervised Feature Learning", Neural Networks 2019
+#
+# Key difference from Diehl & Cook: local receptive fields (patches)
+# instead of full connectivity.  Each patch has its own group of
+# STDP-trained neurons with local WTA.
+
+experiment_name: "lc_snn_mnist"
+seed: 0
+output_dir: "./outputs"
+
+# Dataset
+dataset: "mnist"
+data_root: "./data"
+
+# Encoder
+encoder: "lc_snn"
+encoder_config:
+  input_dim: 784
+  image_side: 28             # sqrt(784) for MNIST
+
+  # Patch parameters
+  patch_size: 14             # 14x14 pixel patches
+  patch_stride: 14           # Non-overlapping (28/14 = 2x2 = 4 patches)
+
+  # Neurons per patch
+  neurons_per_patch: 100     # 4 patches x 100 = 400 total neurons
+
+  simulation_time: 350       # ms per sample
+  dt: 1.0
+
+  # LIF neuron parameters
+  thresh: -52.0
+  rest: -65.0
+  refrac: 5
+
+  # Poisson encoding
+  intensity: 128.0
+
+  # STDP parameters
+  nu: [1.0e-4, 1.0e-2]
+
+  # Training
+  n_train_samples: null
+
+  # Binarization
+  binarization_percent: 0.05
+
+# Pipeline binarization
+binarization_method: "none"
+
+# Evaluation
+eval_clustering: true
+eval_retrieval: true
+n_clusters: 10
+
+clustering_methods:
+  - kmeans
+  - kmedoids
+  - spectral
+
+# Hardware
+device: "cuda"
+
+# Logging
+verbose: true
+save_codes: true
+save_model: true

@@ -73,6 +73,24 @@ AVAILABLE_BASELINES = {
         'requires_training': True,
         'gpu_required': False,  # Optional, but recommended
     },
+    'lm_snn': {
+        'config': 'configs/lm_snn.yaml',
+        'description': 'LM-SNN - Lattice Map SNN with topological inhibition (requires BindsNET)',
+        'requires_training': True,
+        'gpu_required': False,
+    },
+    'lc_snn': {
+        'config': 'configs/lc_snn.yaml',
+        'description': 'LC-SNN - Locally Connected SNN with patch-based STDP (requires BindsNET)',
+        'requires_training': True,
+        'gpu_required': False,
+    },
+    'deep_stdp': {
+        'config': 'configs/deep_stdp.yaml',
+        'description': 'Deep-STDP - Multi-layer STDP + clustering (requires BindsNET)',
+        'requires_training': True,
+        'gpu_required': False,
+    },
     'flyhash_sift1m': {
         'config': 'configs/flyhash_sift1m.yaml',
         'description': 'FlyHash on SIFT-1M dataset',
