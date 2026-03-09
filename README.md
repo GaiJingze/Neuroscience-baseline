@@ -8,6 +8,10 @@ Unified evaluation pipeline for biologically-inspired unsupervised feature learn
 |---|---|---|
 | **FlyHash** | Random projection + WTA | Instant |
 | **Diehl & Cook** | STDP + lateral inhibition (BindsNET) | ~6 h (60K, GPU) |
+| **Deep STDP** | Multi-layer STDP + K-means bootstrapping | ~8 h (60K, GPU) |
+| **LC-SNN** | Locally-competitive SNN (patch-based STDP) | ~4 h (60K, GPU) |
+| **LM-SNN** | Laterally-modulated SNN (topological inhibition) | ~6 h (60K, GPU) |
+| **CSDP** | Contrastive signal-dependent plasticity (Hebbian SNN) | ~3 min (5K, CPU) |
 | **SoftHebb** | Hebbian + Soft-WTA | ~2 min |
 | **Krotov** | Hebbian + WTA | ~1 min |
 | **BioHash** | Hebbian + sparse projection | ~2 min |
@@ -115,14 +119,122 @@ A convenience shell script wraps the above with error handling:
 bash scripts/run_all_baselines.sh
 ```
 
+## Encoder Interface Specification
+
+All baseline encoders inherit from `BaseEncoder` (`baselines/base_encoder.py`)
+and follow a unified input/output contract. This makes it easy to swap
+encoders in the pipeline and to add new tasks (clustering, retrieval,
+visualisation, etc.) without per-encoder adaptation.
+
+### Config (`__init__`)
+
+```python
+config = {
+    'input_dim':  784,   # (required) dimensionality of one input sample
+    'output_dim': 256,   # (required) dimensionality of the output code
+    # ... encoder-specific parameters (learning rate, neuron count, etc.)
+}
+encoder = SomeEncoder(config)
+```
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `input_dim` | int | Yes | Flattened input dimension (e.g. 784 for MNIST) |
+| `output_dim` | int | Yes | Output code dimension (pre_code & code width) |
+| *others* | — | No | Encoder-specific, with sensible defaults |
+
+### Training (`fit`)
+
+```python
+encoder.fit(train_data, train_labels=None)
+```
+
+| Parameter | Type | Shape | Description |
+|-----------|------|-------|-------------|
+| `train_data` | `np.ndarray` float32 | `(n_samples, input_dim)` | Training samples, values in [0, 1] |
+| `train_labels` | `np.ndarray` int, optional | `(n_samples,)` | Ground-truth labels — **not used for training** (unsupervised). For logging / analysis only. |
+
+Sets `self.is_trained = True` on completion.
+
+### Encoding (`encode`)
+
+```python
+result = encoder.encode(data)
+```
+
+| Parameter | Type | Shape | Description |
+|-----------|------|-------|-------------|
+| `data` (input) | `np.ndarray` float32 | `(n_samples, input_dim)` | Samples to encode |
+| `result['pre_code']` | `np.ndarray` float32 | `(n_samples, output_dim)` | Continuous representation before binarisation |
+| `result['code']` | `np.ndarray` float32 | `(n_samples, output_dim)` | Binary code after binarisation, values in {0, 1} |
+
+> **Key constraint**: `pre_code` and `code` must have the **same shape**.
+> Downstream tasks (clustering, hashing retrieval) consume `code`;
+> `pre_code` is kept for analysis and alternative metrics.
+
+### Persistence (`save` / `load`)
+
+```python
+encoder.save('outputs/model.pkl')
+encoder.load('outputs/model.pkl')
+```
+
+Encoders with framework-specific state (e.g. PyTorch weights) override
+these methods and store additional files alongside the base pickle.
+
+### Minimal Example
+
+```python
+import numpy as np
+from baselines.flyhash.encoder import FlyHashEncoder
+
+config = {'input_dim': 784, 'output_dim': 256}
+encoder = FlyHashEncoder(config)
+
+train_data = np.random.rand(1000, 784).astype(np.float32)
+encoder.fit(train_data)
+
+test_data = np.random.rand(200, 784).astype(np.float32)
+result = encoder.encode(test_data)
+
+assert result['pre_code'].shape == (200, 256)
+assert result['code'].shape     == (200, 256)
+assert set(np.unique(result['code'])).issubset({0.0, 1.0})
+```
+
+### Data Flow Diagram
+
+```
+                        ┌──────────────┐
+  np.ndarray            │              │
+  (n, input_dim) ──────►│  encoder.fit │  (unsupervised training)
+  float32, [0,1]        │              │
+                        └──────────────┘
+                               │
+                        is_trained = True
+                               │
+                        ┌──────────────┐      ┌──────────────────────────────┐
+  np.ndarray            │              │      │ result['pre_code']           │
+  (n, input_dim) ──────►│encoder.encode├─────►│   shape: (n, output_dim)     │
+  float32, [0,1]        │              │      │   dtype: float32 (continuous)│
+                        └──────────────┘      │ result['code']               │
+                                              │   shape: (n, output_dim)     │
+                                              │   dtype: float32, {0, 1}     │
+                                              └──────────────────────────────┘
+```
+
 ## Project Structure
 
 ```
 .
-├── baselines/          # Encoder implementations
-│   ├── base_encoder.py
+├── baselines/          # Encoder implementations (all follow BaseEncoder API)
+│   ├── base_encoder.py #   Interface specification & BaseEncoder ABC
 │   ├── flyhash/
 │   ├── diehl_cook/
+│   ├── deep_stdp/
+│   ├── lc_snn/
+│   ├── lm_snn/
+│   ├── csdp/
 │   ├── softhebb/
 │   ├── krotov/
 │   ├── biohash/

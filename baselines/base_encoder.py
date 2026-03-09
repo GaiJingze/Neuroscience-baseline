@@ -1,5 +1,104 @@
 """
 Abstract base class for all baseline encoders.
+
+Encoder Interface Specification (v1.0)
+======================================
+
+All baseline encoders must inherit from ``BaseEncoder`` and follow the
+unified input/output contract described below.  This ensures that any
+encoder can be swapped into the evaluation pipeline (clustering,
+retrieval, etc.) without modification.
+
+1. Configuration (``__init__``)
+-------------------------------
+Each encoder is initialised with a single ``config: dict``.
+Two keys are **required** across all encoders:
+
+    config['input_dim']   — int, dimensionality of a single input sample
+                            (e.g. 784 for flattened 28x28 MNIST).
+    config['output_dim']  — int, dimensionality of the output code
+                            (both pre_code and code must have this width).
+
+All other keys are encoder-specific (learning rate, number of neurons,
+spiking parameters, etc.) and should have sensible defaults.
+
+2. Training (``fit``)
+---------------------
+::
+
+    encoder.fit(train_data, train_labels=None)
+
+    Parameters
+    ----------
+    train_data   : np.ndarray, shape (n_samples, input_dim), dtype float32
+                   Training samples.  Values should be in [0, 1] (if the
+                   raw data uses a different range, the encoder normalises
+                   internally).
+    train_labels : np.ndarray, shape (n_samples,), optional
+                   Ground-truth labels.  **Not used for training** (all
+                   encoders are unsupervised).  May be used for logging /
+                   analysis only.
+
+    Side effects
+    ------------
+    Sets ``self.is_trained = True`` upon successful completion.
+
+3. Encoding (``encode``)
+------------------------
+::
+
+    result = encoder.encode(data)
+
+    Parameters
+    ----------
+    data : np.ndarray, shape (n_samples, input_dim), dtype float32
+
+    Returns
+    -------
+    result : Dict[str, np.ndarray]
+        'pre_code' — np.ndarray, shape (n_samples, output_dim), dtype float32
+                     Continuous-valued representation **before** binarisation
+                     (e.g. spike counts, raw activations, projections).
+        'code'     — np.ndarray, shape (n_samples, output_dim), dtype float32
+                     Binary / sparse code **after** binarisation.
+                     Values in {0, 1}.
+
+    Notes
+    -----
+    - ``pre_code`` and ``code`` must have the **same** shape.
+    - ``code`` is what downstream tasks (clustering, hashing retrieval)
+      consume; ``pre_code`` is kept for analysis and alternative metrics.
+
+4. Persistence (``save`` / ``load``)
+------------------------------------
+::
+
+    encoder.save(path)   # path: str, e.g. 'outputs/model.pkl'
+    encoder.load(path)
+
+Encoders that keep framework-specific state (e.g. PyTorch weights)
+should override ``save`` / ``load`` and store additional files alongside
+the base pickle.
+
+5. Minimal Example
+------------------
+::
+
+    import numpy as np
+    from baselines.flyhash.encoder import FlyHashEncoder
+
+    config = {'input_dim': 784, 'output_dim': 256}
+    encoder = FlyHashEncoder(config)
+
+    train_data = np.random.rand(1000, 784).astype(np.float32)
+    encoder.fit(train_data)
+
+    test_data = np.random.rand(200, 784).astype(np.float32)
+    result = encoder.encode(test_data)
+
+    assert result['pre_code'].shape == (200, 256)
+    assert result['code'].shape     == (200, 256)
+    assert set(np.unique(result['code'])).issubset({0.0, 1.0})
 """
 
 from abc import ABC, abstractmethod
@@ -12,15 +111,24 @@ from typing import Dict, Optional
 class BaseEncoder(ABC):
     """
     Abstract base class for all baseline encoders.
-    Ensures consistent API across different methods.
+
+    Ensures a consistent API across different methods so that any encoder
+    can be used interchangeably in the evaluation pipeline.  See the
+    module-level docstring for the full interface specification.
+
+    Subclasses **must** implement ``fit()`` and ``encode()``.
+    Subclasses **may** override ``save()`` / ``load()`` to persist
+    framework-specific state (e.g. PyTorch model weights).
     """
-    
+
     def __init__(self, config: dict):
         """
         Initialize encoder with configuration.
-        
+
         Args:
-            config: Dictionary with encoder-specific parameters
+            config: Dictionary with encoder-specific parameters.
+                    Required keys: ``input_dim`` (int), ``output_dim`` (int).
+                    All other keys are encoder-specific.
         """
         self.config = config
         self.is_trained = False
@@ -29,26 +137,36 @@ class BaseEncoder(ABC):
     @abstractmethod
     def fit(self, train_data: np.ndarray, train_labels: Optional[np.ndarray] = None):
         """
-        Train the encoder (unsupervised, labels only for analysis).
-        
+        Train the encoder (unsupervised).
+
         Args:
-            train_data: (n_samples, input_dim) numpy array
-            train_labels: (n_samples,) optional, for analysis only (not used in training)
+            train_data:   np.ndarray, shape (n_samples, input_dim), dtype float32.
+            train_labels: np.ndarray, shape (n_samples,), optional.
+                          Ground-truth labels — **not used for training**.
+                          May be used for logging / analysis only.
+
+        Side effects:
+            Sets ``self.is_trained = True`` upon successful completion.
         """
         pass
-    
+
     @abstractmethod
     def encode(self, data: np.ndarray) -> Dict[str, np.ndarray]:
         """
         Encode data into representations.
-        
+
         Args:
-            data: (n_samples, input_dim) numpy array
-        
+            data: np.ndarray, shape (n_samples, input_dim), dtype float32.
+
         Returns:
-            dict with keys:
-                - 'pre_code': (n_samples, code_dim) continuous representation before binarization
-                - 'code': (n_samples, code_dim) sparse/binary code after binarization
+            Dict[str, np.ndarray] with exactly two keys:
+                'pre_code': shape (n_samples, output_dim), float32.
+                            Continuous representation before binarisation.
+                'code':     shape (n_samples, output_dim), float32.
+                            Binary code after binarisation, values in {0, 1}.
+
+        Raises:
+            RuntimeError: If the encoder has not been fitted yet.
         """
         pass
     
