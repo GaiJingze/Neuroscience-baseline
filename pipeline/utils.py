@@ -3,10 +3,13 @@ Utility functions for the clustering/hashing pipeline.
 """
 
 import os
+import sys
 import json
 import random
+import logging
 import numpy as np
 import torch
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -160,21 +163,111 @@ def format_time(seconds: float) -> str:
 
 
 class Logger:
-    """Simple logger for experiment tracking."""
-    
-    def __init__(self, log_file: Optional[str] = None):
+    """Logger for experiment tracking with timestamped console and file output.
+
+    Supports INFO / WARNING / ERROR levels. When a ``log_file`` is provided,
+    all messages are written to both the console and the file with timestamps.
+    """
+
+    _LEVEL_MAP = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+    }
+
+    def __init__(self, log_file: Optional[str] = None, level: str = 'INFO',
+                 name: Optional[str] = None):
+        """
+        Args:
+            log_file: Path to the log file. ``None`` disables file logging.
+            level: Minimum log level ('DEBUG', 'INFO', 'WARNING', 'ERROR').
+            name: Logger name. Defaults to 'pipeline'.
+        """
         self.log_file = log_file
+        logger_name = name or 'pipeline'
+        self._logger = logging.getLogger(logger_name)
+        self._logger.setLevel(self._LEVEL_MAP.get(level.upper(), logging.INFO))
+        # Avoid duplicate handlers when Logger is instantiated multiple times
+        self._logger.handlers.clear()
+        self._logger.propagate = False
+
+        fmt = '%(asctime)s [%(levelname)s] %(message)s'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+
+        # Console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
+        self._logger.addHandler(console_handler)
+
+        # File handler
         if log_file:
             ensure_dir(os.path.dirname(log_file))
-    
+            file_handler = logging.FileHandler(log_file, encoding='utf-8')
+            file_handler.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
+            self._logger.addHandler(file_handler)
+
+    # ---- public API (backward-compatible) ----
+
     def log(self, message: str):
-        """Log a message to console and file."""
-        print(message)
-        if self.log_file:
-            with open(self.log_file, 'a') as f:
-                f.write(message + '\n')
-    
+        """Log an INFO-level message (backward-compatible entry point)."""
+        self.info(message)
+
+    def info(self, message: str):
+        self._logger.info(message)
+
+    def warning(self, message: str):
+        self._logger.warning(message)
+
+    def error(self, message: str):
+        self._logger.error(message)
+
+    def debug(self, message: str):
+        self._logger.debug(message)
+
     def log_dict(self, data: Dict[str, Any], prefix: str = ""):
         """Log a dictionary in a formatted way."""
         for key, value in data.items():
-            self.log(f"{prefix}{key}: {value}")
+            self.info(f"{prefix}{key}: {value}")
+
+    def get_log_file(self) -> Optional[str]:
+        """Return the log file path, or None if file logging is disabled."""
+        return self.log_file
+
+
+def setup_logging(experiment_name: str, output_dir: str = './outputs',
+                  seed: Optional[int] = None, level: str = 'INFO') -> Logger:
+    """Create a Logger with an auto-generated log file path.
+
+    The log file is placed at ``<output_dir>/logs/<experiment_name>_<timestamp>.log``.
+    A ``latest.log`` symlink (or copy on Windows) is also maintained.
+
+    Args:
+        experiment_name: Name used as log file prefix.
+        output_dir: Root output directory.
+        seed: Optional seed appended to the filename.
+        level: Minimum log level.
+
+    Returns:
+        Configured :class:`Logger` instance.
+    """
+    logs_dir = Path(output_dir) / 'logs'
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    seed_suffix = f'_seed{seed}' if seed is not None else ''
+    log_filename = f'{experiment_name}{seed_suffix}_{timestamp}.log'
+    log_file = logs_dir / log_filename
+
+    logger = Logger(log_file=str(log_file), level=level, name=experiment_name)
+
+    # Maintain a latest.log symlink for convenience
+    latest_link = logs_dir / 'latest.log'
+    try:
+        if latest_link.is_symlink() or latest_link.exists():
+            latest_link.unlink()
+        latest_link.symlink_to(log_file.name)
+    except OSError:
+        pass  # Symlinks may not be supported on all platforms
+
+    return logger

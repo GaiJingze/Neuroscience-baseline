@@ -15,7 +15,7 @@ from .metrics import (
 from .clustering import run_clustering_evaluation
 from .retrieval import run_retrieval_evaluation
 from .binarization import top_k_binarization, threshold_binarization, wta_binarization
-from .utils import set_seed, save_results, load_results, Logger
+from .utils import set_seed, save_results, load_results, Logger, setup_logging
 
 __all__ = [
     'load_dataset',
@@ -36,4 +36,5 @@ __all__ = [
     'save_results',
     'load_results',
     'Logger',
+    'setup_logging',
 ]

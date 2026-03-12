@@ -23,7 +23,7 @@ from pipeline import (
     run_retrieval_evaluation,
     set_seed,
     save_results,
-    Logger
+    setup_logging,
 )
 from pipeline.binarization import top_k_binarization, top_k_percent_binarization
 from baselines.base_encoder import DummyEncoder
@@ -225,9 +225,12 @@ def main(args):
     output_dir = Path(config['output_dir'])
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Setup logger
-    log_file = output_dir / 'logs' / f"{config['experiment_name']}_seed{config['seed']}.log"
-    logger = Logger(str(log_file))
+    # Setup logger with timestamped log file
+    logger = setup_logging(
+        experiment_name=config['experiment_name'],
+        output_dir=str(output_dir),
+        seed=config['seed'],
+    )
     
     logger.log("="*80)
     logger.log(f"Experiment: {config['experiment_name']}")
@@ -273,8 +276,8 @@ def main(args):
     # ---- Auto-set input_dim and device from dataset / top-level config ----
     actual_dim = dataset['train_data'].shape[1]
     if config['encoder_config'].get('input_dim') and config['encoder_config']['input_dim'] != actual_dim:
-        logger.log(f"  WARNING: encoder_config.input_dim={config['encoder_config']['input_dim']} "
-                    f"!= dataset dim={actual_dim}. Overriding to {actual_dim}.")
+        logger.warning(f"encoder_config.input_dim={config['encoder_config']['input_dim']} "
+                       f"!= dataset dim={actual_dim}. Overriding to {actual_dim}.")
     config['encoder_config']['input_dim'] = actual_dim
 
     if config.get('device') and 'device' not in config['encoder_config']:
@@ -435,6 +438,8 @@ def main(args):
     
     logger.log("\n" + "="*80)
     logger.log("Experiment complete!")
+    if logger.get_log_file():
+        logger.log(f"Full log saved to: {logger.get_log_file()}")
     logger.log("="*80)
 
 
