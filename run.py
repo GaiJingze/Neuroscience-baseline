@@ -29,6 +29,7 @@ sys.path.insert(0, str(scripts_dir))
 # Import from scripts
 from scripts.run_baseline import main as run_baseline_main
 from scripts.test_baseline import list_baselines, AVAILABLE_BASELINES
+from pipeline.utils import setup_logging
 
 
 def print_welcome():
@@ -120,6 +121,12 @@ Examples:
         '--force',
         action='store_true',
         help='Force re-encoding (ignore cache)'
+    )
+    parser.add_argument(
+        '--log-dir',
+        type=str,
+        default='./outputs',
+        help='Root directory for log files (default: ./outputs)'
     )
     
     args = parser.parse_args()
@@ -220,25 +227,36 @@ Examples:
     if args.force:
         run_args.append('--force')
     
+    # Setup logging for the main entry point
+    baseline_name = args.baseline or Path(args.config).stem
+    logger = setup_logging(
+        experiment_name=f'run_{baseline_name}',
+        output_dir=args.log_dir,
+        seed=args.seed,
+    )
+
     # Print execution info
     print_welcome()
-    print(f"Running: scripts/run_baseline.py {' '.join(run_args)}")
-    print()
-    
+    logger.info(f"Running: scripts/run_baseline.py {' '.join(run_args)}")
+
     # Call the original run_baseline script
     sys.argv = ['run_baseline.py'] + run_args
-    
+
     try:
-        return run_baseline_main(argparse.Namespace(**{
+        result = run_baseline_main(argparse.Namespace(**{
             'config': args.config if args.config else f'configs/{args.baseline}.yaml',
             'seed': args.seed,
             'dataset': args.dataset if args.baseline else None,
             'force': args.force
         }))
+        logger.info("Pipeline finished successfully.")
+        if logger.get_log_file():
+            logger.info(f"Full log saved to: {logger.get_log_file()}")
+        return result
     except Exception as e:
-        print(f"ERROR: {e}")
+        logger.error(f"{e}")
         import traceback
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
         return 1
 
 
