@@ -1,0 +1,85 @@
+{
+  "config": {
+    "experiment_name": "lc_snn_mnist",
+    "seed": 0,
+    "output_dir": "./outputs",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "lc_snn",
+    "encoder_config": {
+      "input_dim": 784,
+      "image_side": 28,
+      "patch_size": 14,
+      "patch_stride": 14,
+      "neurons_per_patch": 100,
+      "simulation_time": 350,
+      "dt": 1.0,
+      "thresh": -52.0,
+      "rest": -65.0,
+      "refrac": 5,
+      "intensity": 128.0,
+      "nu": [
+        0.0001,
+        0.01
+      ],
+      "n_train_samples": null,
+      "binarization_percent": 0.05,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans",
+      "kmedoids",
+      "spectral"
+    ],
+    "device": "cuda",
+    "verbose": true,
+    "save_codes": true,
+    "save_model": true
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.27085915955327455,
+      "ari": 0.15734874768175763,
+      "acc": 0.3815,
+      "purity": 0.4005,
+      "silhouette": 0.09268969503092626,
+      "davies_bouldin": 3.859720607484794
+    },
+    "spectral": {
+      "nmi": 0.20124364054570015,
+      "ari": 0.021522196891512406,
+      "acc": 0.2001,
+      "purity": 0.2348,
+      "silhouette": 0.04539277269357538,
+      "davies_bouldin": 3.59603606167974
+    }
+  },
+  "retrieval": {
+    "map": 0.03850719354904123,
+    "recall@1": 0.000129,
+    "precision@1": 0.0129,
+    "ndcg@1": 0.0129,
+    "recall@10": 0.00111,
+    "precision@10": 0.0111,
+    "ndcg@10": 0.011484715038859719,
+    "recall@50": 0.005301,
+    "precision@50": 0.010602,
+    "ndcg@50": 0.010864942842244511,
+    "recall@100": 0.010112999999999999,
+    "precision@100": 0.010112999999999999,
+    "ndcg@100": 0.010391351930383513
+  }
+}

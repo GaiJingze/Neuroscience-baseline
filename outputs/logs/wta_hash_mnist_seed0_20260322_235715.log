@@ -1,0 +1,58 @@
+2026-03-22 23:57:15 [INFO] ================================================================================
+2026-03-22 23:57:15 [INFO] Experiment: wta_hash_mnist
+2026-03-22 23:57:15 [INFO] Encoder: wta_hash
+2026-03-22 23:57:15 [INFO] Dataset: mnist
+2026-03-22 23:57:15 [INFO] Seed: 0
+2026-03-22 23:57:15 [INFO] ================================================================================
+2026-03-22 23:57:15 [INFO] 
+[1/5] Loading dataset...
+2026-03-22 23:57:16 [INFO]   Train samples: 60000
+2026-03-22 23:57:16 [INFO]   Test samples: 10000
+2026-03-22 23:57:16 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-22 23:57:16 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-22 23:57:16 [INFO] 
+[2/5] Initializing encoder...
+2026-03-22 23:57:16 [INFO]   Encoder: WTAHashEncoder(trained=False)
+2026-03-22 23:57:16 [INFO] 
+[3/5] Training encoder...
+2026-03-22 23:57:16 [INFO] 
+[4/5] Encoding test data...
+2026-03-22 23:57:16 [INFO]   Running encoder...
+2026-03-22 23:57:16 [INFO]   Codes saved to outputs/codes/wta_hash/mnist
+2026-03-22 23:57:16 [INFO]   Pre-code shape: (10000, 512)
+2026-03-22 23:57:16 [INFO]   Code shape: (10000, 512)
+2026-03-22 23:57:16 [INFO]   Code sparsity: 0.875
+2026-03-22 23:57:16 [INFO] 
+[5/5] Evaluating...
+2026-03-22 23:57:16 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-22 23:57:19 [INFO]     Clustering results:
+2026-03-22 23:57:19 [INFO]       kmeans:
+2026-03-22 23:57:19 [INFO]         NMI=0.4591, ARI=0.3288, ACC=0.5132
+2026-03-22 23:57:19 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-22 23:57:19 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-22 23:57:19 [INFO]     Encoding train_data as retrieval database...
+2026-03-23 00:00:35 [INFO]     Retrieval results:
+2026-03-23 00:00:35 [INFO]       map: 0.0458
+2026-03-23 00:00:35 [INFO]       recall@1: 0.0001
+2026-03-23 00:00:35 [INFO]       precision@1: 0.0145
+2026-03-23 00:00:35 [INFO]       ndcg@1: 0.0145
+2026-03-23 00:00:35 [INFO]       recall@10: 0.0015
+2026-03-23 00:00:35 [INFO]       precision@10: 0.0148
+2026-03-23 00:00:35 [INFO]       ndcg@10: 0.0148
+2026-03-23 00:00:35 [INFO]       recall@50: 0.0070
+2026-03-23 00:00:35 [INFO]       precision@50: 0.0140
+2026-03-23 00:00:35 [INFO]       ndcg@50: 0.0142
+2026-03-23 00:00:35 [INFO]       recall@100: 0.0135
+2026-03-23 00:00:35 [INFO]       precision@100: 0.0135
+2026-03-23 00:00:35 [INFO]       ndcg@100: 0.0138
+2026-03-23 00:00:35 [INFO] 
+Results saved to outputs/results/wta_hash_mnist_seed0.json
+2026-03-23 00:00:35 [INFO] Model saved to outputs/codes/wta_hash/mnist/model_seed0.pkl
+2026-03-23 00:00:35 [INFO] 
+================================================================================
+2026-03-23 00:00:35 [INFO] Experiment complete!
+2026-03-23 00:00:35 [INFO] Full log saved to: outputs/logs/wta_hash_mnist_seed0_20260322_235715.log
+2026-03-23 00:00:35 [INFO] ================================================================================

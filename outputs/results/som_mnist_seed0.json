@@ -1,0 +1,72 @@
+{
+  "config": {
+    "experiment_name": "som_mnist",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "som",
+    "encoder_config": {
+      "input_dim": 784,
+      "map_height": 20,
+      "map_width": 20,
+      "n_epochs": 10,
+      "lr_init": 0.5,
+      "lr_final": 0.01,
+      "sigma_init": null,
+      "sigma_final": 1.0,
+      "batch_size": 1,
+      "k_active": 20,
+      "verbose": true
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans"
+    ],
+    "retrieval_k_values": [
+      1,
+      10,
+      50,
+      100
+    ],
+    "output_dir": "./outputs",
+    "save_codes": true,
+    "save_model": true,
+    "seed": 0
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.949999988079071
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.6340530515110189,
+      "ari": 0.5214597702268129,
+      "acc": 0.6528,
+      "purity": 0.7022,
+      "silhouette": 0.16910184919834137,
+      "davies_bouldin": 2.3353581187449994
+    }
+  },
+  "retrieval": {
+    "map": 0.042607248049678685,
+    "recall@1": 0.000125,
+    "precision@1": 0.0125,
+    "ndcg@1": 0.0125,
+    "recall@10": 0.001373,
+    "precision@10": 0.013730000000000001,
+    "ndcg@10": 0.013417665355309413,
+    "recall@50": 0.006925999999999999,
+    "precision@50": 0.013851999999999998,
+    "ndcg@50": 0.013753080921275074,
+    "recall@100": 0.013644,
+    "precision@100": 0.013644,
+    "ndcg@100": 0.013625479469427909
+  }
+}

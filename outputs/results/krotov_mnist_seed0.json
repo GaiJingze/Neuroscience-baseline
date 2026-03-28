@@ -1,0 +1,74 @@
+{
+  "config": {
+    "experiment_name": "krotov_mnist",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "krotov",
+    "encoder_config": {
+      "input_dim": 784,
+      "n_neurons": 400,
+      "n_epochs": 200,
+      "batch_size": 100,
+      "lr": 0.02,
+      "delta": 0.4,
+      "p": 2.0,
+      "k": 2,
+      "init_mu": 0.0,
+      "init_sigma": 1.0,
+      "prec": 1e-30,
+      "verbose": true
+    },
+    "binarization_method": "none",
+    "binarization_params": {},
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans"
+    ],
+    "retrieval_k_values": [
+      1,
+      10,
+      50,
+      100
+    ],
+    "output_dir": "./outputs",
+    "save_codes": true,
+    "save_model": true,
+    "seed": 0
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.5940585074068431,
+      "ari": 0.4656427017132522,
+      "acc": 0.6294,
+      "purity": 0.6654,
+      "silhouette": 0.10575939754890426,
+      "davies_bouldin": 2.7452701422797814
+    }
+  },
+  "retrieval": {
+    "map": 0.04704000441264402,
+    "recall@1": 0.000151,
+    "precision@1": 0.0151,
+    "ndcg@1": 0.0151,
+    "recall@10": 0.0015570000000000002,
+    "precision@10": 0.015569999999999999,
+    "ndcg@10": 0.015472952040197448,
+    "recall@50": 0.0074329999999999995,
+    "precision@50": 0.014865999999999999,
+    "ndcg@50": 0.014964001446264192,
+    "recall@100": 0.014540000000000003,
+    "precision@100": 0.014540000000000003,
+    "ndcg@100": 0.014675613517079961
+  }
+}

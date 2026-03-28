@@ -1,0 +1,87 @@
+{
+  "config": {
+    "experiment_name": "deep_stdp_mnist",
+    "seed": 0,
+    "output_dir": "./outputs",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "deep_stdp",
+    "encoder_config": {
+      "input_dim": 784,
+      "layer_sizes": [
+        400,
+        200
+      ],
+      "n_rounds": 2,
+      "n_clusters": 10,
+      "simulation_time": 350,
+      "dt": 1.0,
+      "thresh": -52.0,
+      "rest": -65.0,
+      "refrac": 5,
+      "intensity": 128.0,
+      "nu": [
+        0.0001,
+        0.01
+      ],
+      "n_train_samples": null,
+      "binarization_percent": 0.05,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans",
+      "kmedoids",
+      "spectral"
+    ],
+    "device": "cuda",
+    "verbose": true,
+    "save_codes": true,
+    "save_model": true
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 200,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.16547214539891658,
+      "ari": 0.026898379485785114,
+      "acc": 0.2276,
+      "purity": 0.257,
+      "silhouette": 0.4696408921485282,
+      "davies_bouldin": 2.037589425087323
+    },
+    "spectral": {
+      "nmi": 0.029564299086605572,
+      "ari": 0.0009412144972150116,
+      "acc": 0.1195,
+      "purity": 0.1289,
+      "silhouette": 0.4461715193851547,
+      "davies_bouldin": 1.5720725806717835
+    }
+  },
+  "retrieval": {
+    "map": 0.021343349423188586,
+    "recall@1": 5.5e-05,
+    "precision@1": 0.0055,
+    "ndcg@1": 0.0055,
+    "recall@10": 0.000582,
+    "precision@10": 0.0058200000000000005,
+    "ndcg@10": 0.005853063619052116,
+    "recall@50": 0.002788,
+    "precision@50": 0.005576,
+    "ndcg@50": 0.005646660051550342,
+    "recall@100": 0.005411,
+    "precision@100": 0.005411,
+    "ndcg@100": 0.005494741276792778
+  }
+}
