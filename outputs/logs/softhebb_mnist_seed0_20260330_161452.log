@@ -1,0 +1,58 @@
+2026-03-30 16:14:52 [INFO] ================================================================================
+2026-03-30 16:14:52 [INFO] Experiment: softhebb_mnist
+2026-03-30 16:14:52 [INFO] Encoder: softhebb
+2026-03-30 16:14:52 [INFO] Dataset: fashion_mnist
+2026-03-30 16:14:52 [INFO] Seed: 0
+2026-03-30 16:14:52 [INFO] ================================================================================
+2026-03-30 16:14:52 [INFO] 
+[1/5] Loading dataset...
+2026-03-30 16:14:52 [INFO]   Train samples: 60000
+2026-03-30 16:14:52 [INFO]   Test samples: 10000
+2026-03-30 16:14:52 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-30 16:14:52 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-30 16:14:52 [INFO] 
+[2/5] Initializing encoder...
+2026-03-30 16:14:52 [INFO]   Encoder: SoftHebbEncoder(trained=False)
+2026-03-30 16:14:52 [INFO] 
+[3/5] Training encoder...
+2026-03-30 16:14:58 [INFO] 
+[4/5] Encoding test data...
+2026-03-30 16:14:58 [INFO]   Running encoder...
+2026-03-30 16:14:58 [INFO]   Codes saved to outputs/codes/softhebb/fashion_mnist
+2026-03-30 16:14:58 [INFO]   Pre-code shape: (10000, 400)
+2026-03-30 16:14:58 [INFO]   Code shape: (10000, 400)
+2026-03-30 16:14:58 [INFO]   Code sparsity: 0.950
+2026-03-30 16:14:58 [INFO] 
+[5/5] Evaluating...
+2026-03-30 16:14:58 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-30 16:15:01 [INFO]     Clustering results:
+2026-03-30 16:15:01 [INFO]       kmeans:
+2026-03-30 16:15:01 [INFO]         NMI=0.0015, ARI=0.0000, ACC=0.1005
+2026-03-30 16:15:01 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-30 16:15:01 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-30 16:15:01 [INFO]     Encoding train_data as retrieval database...
+2026-03-30 16:17:48 [INFO]     Retrieval results:
+2026-03-30 16:17:48 [INFO]       map: 0.0074
+2026-03-30 16:17:48 [INFO]       recall@1: 0.0000
+2026-03-30 16:17:48 [INFO]       precision@1: 0.0013
+2026-03-30 16:17:48 [INFO]       ndcg@1: 0.0013
+2026-03-30 16:17:48 [INFO]       recall@10: 0.0002
+2026-03-30 16:17:48 [INFO]       precision@10: 0.0016
+2026-03-30 16:17:48 [INFO]       ndcg@10: 0.0016
+2026-03-30 16:17:48 [INFO]       recall@50: 0.0008
+2026-03-30 16:17:48 [INFO]       precision@50: 0.0016
+2026-03-30 16:17:48 [INFO]       ndcg@50: 0.0016
+2026-03-30 16:17:48 [INFO]       recall@100: 0.0016
+2026-03-30 16:17:48 [INFO]       precision@100: 0.0016
+2026-03-30 16:17:48 [INFO]       ndcg@100: 0.0016
+2026-03-30 16:17:48 [INFO] 
+Results saved to outputs/results/softhebb_fashion_mnist_seed0.json
+2026-03-30 16:17:48 [INFO] Model saved to outputs/codes/softhebb/fashion_mnist/model_seed0.pkl
+2026-03-30 16:17:48 [INFO] 
+================================================================================
+2026-03-30 16:17:48 [INFO] Experiment complete!
+2026-03-30 16:17:48 [INFO] Full log saved to: outputs/logs/softhebb_mnist_seed0_20260330_161452.log
+2026-03-30 16:17:48 [INFO] ================================================================================

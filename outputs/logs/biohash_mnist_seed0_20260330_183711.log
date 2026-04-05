@@ -1,0 +1,58 @@
+2026-03-30 18:37:11 [INFO] ================================================================================
+2026-03-30 18:37:11 [INFO] Experiment: biohash_mnist
+2026-03-30 18:37:11 [INFO] Encoder: biohash
+2026-03-30 18:37:11 [INFO] Dataset: fashion_mnist
+2026-03-30 18:37:11 [INFO] Seed: 0
+2026-03-30 18:37:11 [INFO] ================================================================================
+2026-03-30 18:37:11 [INFO] 
+[1/5] Loading dataset...
+2026-03-30 18:37:11 [INFO]   Train samples: 60000
+2026-03-30 18:37:11 [INFO]   Test samples: 10000
+2026-03-30 18:37:11 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-30 18:37:11 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-30 18:37:11 [INFO] 
+[2/5] Initializing encoder...
+2026-03-30 18:37:11 [INFO]   Encoder: BioHashEncoder(trained=False)
+2026-03-30 18:37:11 [INFO] 
+[3/5] Training encoder...
+2026-03-30 18:38:48 [INFO] 
+[4/5] Encoding test data...
+2026-03-30 18:38:48 [INFO]   Running encoder...
+2026-03-30 18:38:48 [INFO]   Codes saved to outputs/codes/biohash/fashion_mnist
+2026-03-30 18:38:48 [INFO]   Pre-code shape: (10000, 256)
+2026-03-30 18:38:48 [INFO]   Code shape: (10000, 256)
+2026-03-30 18:38:48 [INFO]   Code sparsity: 0.949
+2026-03-30 18:38:48 [INFO] 
+[5/5] Evaluating...
+2026-03-30 18:38:48 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-30 18:38:50 [INFO]     Clustering results:
+2026-03-30 18:38:50 [INFO]       kmeans:
+2026-03-30 18:38:50 [INFO]         NMI=0.3311, ARI=0.1980, ACC=0.3516
+2026-03-30 18:38:50 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-30 18:38:50 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-30 18:38:50 [INFO]     Encoding train_data as retrieval database...
+2026-03-30 18:40:37 [INFO]     Retrieval results:
+2026-03-30 18:40:37 [INFO]       map: 0.0263
+2026-03-30 18:40:37 [INFO]       recall@1: 0.0001
+2026-03-30 18:40:37 [INFO]       precision@1: 0.0072
+2026-03-30 18:40:37 [INFO]       ndcg@1: 0.0072
+2026-03-30 18:40:37 [INFO]       recall@10: 0.0007
+2026-03-30 18:40:37 [INFO]       precision@10: 0.0073
+2026-03-30 18:40:37 [INFO]       ndcg@10: 0.0073
+2026-03-30 18:40:37 [INFO]       recall@50: 0.0034
+2026-03-30 18:40:37 [INFO]       precision@50: 0.0068
+2026-03-30 18:40:37 [INFO]       ndcg@50: 0.0069
+2026-03-30 18:40:37 [INFO]       recall@100: 0.0067
+2026-03-30 18:40:37 [INFO]       precision@100: 0.0067
+2026-03-30 18:40:37 [INFO]       ndcg@100: 0.0068
+2026-03-30 18:40:37 [INFO] 
+Results saved to outputs/results/biohash_fashion_mnist_seed0.json
+2026-03-30 18:40:37 [INFO] Model saved to outputs/codes/biohash/fashion_mnist/model_seed0.pkl
+2026-03-30 18:40:37 [INFO] 
+================================================================================
+2026-03-30 18:40:37 [INFO] Experiment complete!
+2026-03-30 18:40:37 [INFO] Full log saved to: outputs/logs/biohash_mnist_seed0_20260330_183711.log
+2026-03-30 18:40:37 [INFO] ================================================================================

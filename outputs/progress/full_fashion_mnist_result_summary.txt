@@ -1,0 +1,11 @@
+flyhash: OK
+softhebb: OK
+krotov: OK
+biohash: OK
+wta_hash: OK
+som: OK
+lsh: OK
+diehl_cook: OK
+lm_snn: OK
+lc_snn: OK
+deep_stdp: OK

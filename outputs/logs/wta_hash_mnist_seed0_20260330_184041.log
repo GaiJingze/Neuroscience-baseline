@@ -1,0 +1,58 @@
+2026-03-30 18:40:41 [INFO] ================================================================================
+2026-03-30 18:40:41 [INFO] Experiment: wta_hash_mnist
+2026-03-30 18:40:41 [INFO] Encoder: wta_hash
+2026-03-30 18:40:41 [INFO] Dataset: fashion_mnist
+2026-03-30 18:40:41 [INFO] Seed: 0
+2026-03-30 18:40:41 [INFO] ================================================================================
+2026-03-30 18:40:41 [INFO] 
+[1/5] Loading dataset...
+2026-03-30 18:40:41 [INFO]   Train samples: 60000
+2026-03-30 18:40:41 [INFO]   Test samples: 10000
+2026-03-30 18:40:41 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-30 18:40:41 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-30 18:40:41 [INFO] 
+[2/5] Initializing encoder...
+2026-03-30 18:40:41 [INFO]   Encoder: WTAHashEncoder(trained=False)
+2026-03-30 18:40:41 [INFO] 
+[3/5] Training encoder...
+2026-03-30 18:40:41 [INFO] 
+[4/5] Encoding test data...
+2026-03-30 18:40:41 [INFO]   Running encoder...
+2026-03-30 18:40:41 [INFO]   Codes saved to outputs/codes/wta_hash/fashion_mnist
+2026-03-30 18:40:41 [INFO]   Pre-code shape: (10000, 512)
+2026-03-30 18:40:41 [INFO]   Code shape: (10000, 512)
+2026-03-30 18:40:41 [INFO]   Code sparsity: 0.875
+2026-03-30 18:40:41 [INFO] 
+[5/5] Evaluating...
+2026-03-30 18:40:41 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-30 18:40:44 [INFO]     Clustering results:
+2026-03-30 18:40:44 [INFO]       kmeans:
+2026-03-30 18:40:44 [INFO]         NMI=0.4877, ARI=0.3285, ACC=0.5104
+2026-03-30 18:40:44 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-30 18:40:44 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-30 18:40:44 [INFO]     Encoding train_data as retrieval database...
+2026-03-30 18:43:57 [INFO]     Retrieval results:
+2026-03-30 18:43:57 [INFO]       map: 0.0391
+2026-03-30 18:43:57 [INFO]       recall@1: 0.0001
+2026-03-30 18:43:57 [INFO]       precision@1: 0.0122
+2026-03-30 18:43:57 [INFO]       ndcg@1: 0.0122
+2026-03-30 18:43:57 [INFO]       recall@10: 0.0012
+2026-03-30 18:43:57 [INFO]       precision@10: 0.0118
+2026-03-30 18:43:57 [INFO]       ndcg@10: 0.0119
+2026-03-30 18:43:57 [INFO]       recall@50: 0.0055
+2026-03-30 18:43:57 [INFO]       precision@50: 0.0111
+2026-03-30 18:43:57 [INFO]       ndcg@50: 0.0112
+2026-03-30 18:43:57 [INFO]       recall@100: 0.0106
+2026-03-30 18:43:57 [INFO]       precision@100: 0.0106
+2026-03-30 18:43:57 [INFO]       ndcg@100: 0.0109
+2026-03-30 18:43:57 [INFO] 
+Results saved to outputs/results/wta_hash_fashion_mnist_seed0.json
+2026-03-30 18:43:57 [INFO] Model saved to outputs/codes/wta_hash/fashion_mnist/model_seed0.pkl
+2026-03-30 18:43:57 [INFO] 
+================================================================================
+2026-03-30 18:43:57 [INFO] Experiment complete!
+2026-03-30 18:43:57 [INFO] Full log saved to: outputs/logs/wta_hash_mnist_seed0_20260330_184041.log
+2026-03-30 18:43:57 [INFO] ================================================================================

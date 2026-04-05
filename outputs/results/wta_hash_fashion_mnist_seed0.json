@@ -1,0 +1,65 @@
+{
+  "config": {
+    "experiment_name": "wta_hash_mnist",
+    "dataset": "fashion_mnist",
+    "data_root": "./data",
+    "encoder": "wta_hash",
+    "encoder_config": {
+      "input_dim": 784,
+      "n_hashes": 64,
+      "window_size": 8,
+      "verbose": true
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans"
+    ],
+    "retrieval_k_values": [
+      1,
+      10,
+      50,
+      100
+    ],
+    "output_dir": "./outputs",
+    "save_codes": true,
+    "save_model": true,
+    "seed": 0
+  },
+  "dataset_info": {
+    "name": "fashion_mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 512,
+    "sparsity": 0.875
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.4877450722676084,
+      "ari": 0.32847299025516785,
+      "acc": 0.5104,
+      "purity": 0.5258,
+      "silhouette": 0.034927014261484146,
+      "davies_bouldin": 4.588145327632633
+    }
+  },
+  "retrieval": {
+    "map": 0.039072724871737685,
+    "recall@1": 0.00012200000000000002,
+    "precision@1": 0.0122,
+    "ndcg@1": 0.0122,
+    "recall@10": 0.00118,
+    "precision@10": 0.0118,
+    "ndcg@10": 0.01185125255974116,
+    "recall@50": 0.005528,
+    "precision@50": 0.011056,
+    "ndcg@50": 0.01124246064543989,
+    "recall@100": 0.01064,
+    "precision@100": 0.01064,
+    "ndcg@100": 0.010852430208292132
+  }
+}

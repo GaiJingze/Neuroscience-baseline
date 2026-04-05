@@ -1,0 +1,87 @@
+{
+  "config": {
+    "experiment_name": "deep_stdp_mnist",
+    "seed": 0,
+    "output_dir": "./outputs",
+    "dataset": "fashion_mnist",
+    "data_root": "./data",
+    "encoder": "deep_stdp",
+    "encoder_config": {
+      "input_dim": 784,
+      "layer_sizes": [
+        400,
+        200
+      ],
+      "n_rounds": 2,
+      "n_clusters": 10,
+      "simulation_time": 350,
+      "dt": 1.0,
+      "thresh": -52.0,
+      "rest": -65.0,
+      "refrac": 5,
+      "intensity": 128.0,
+      "nu": [
+        0.0001,
+        0.01
+      ],
+      "n_train_samples": null,
+      "binarization_percent": 0.05,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans",
+      "kmedoids",
+      "spectral"
+    ],
+    "device": "cuda",
+    "verbose": true,
+    "save_codes": true,
+    "save_model": true
+  },
+  "dataset_info": {
+    "name": "fashion_mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 200,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.14525362391133081,
+      "ari": 0.012777840097221932,
+      "acc": 0.1735,
+      "purity": 0.2015,
+      "silhouette": 0.798881433174304,
+      "davies_bouldin": 1.888124612049745
+    },
+    "spectral": {
+      "nmi": 0.017065051916860426,
+      "ari": 7.704079362862866e-05,
+      "acc": 0.1057,
+      "purity": 0.1088,
+      "silhouette": 0.6837929356423944,
+      "davies_bouldin": 1.8102626408902673
+    }
+  },
+  "retrieval": {
+    "map": 0.012358260026831517,
+    "recall@1": 3.0000000000000004e-05,
+    "precision@1": 0.003,
+    "ndcg@1": 0.003,
+    "recall@10": 0.000271,
+    "precision@10": 0.00271,
+    "ndcg@10": 0.0027779463672513616,
+    "recall@50": 0.001443,
+    "precision@50": 0.002886,
+    "ndcg@50": 0.002878757206611244,
+    "recall@100": 0.002853,
+    "precision@100": 0.002853,
+    "ndcg@100": 0.0028551836910236006
+  }
+}

@@ -1,0 +1,60 @@
+2026-04-02 21:30:25 [INFO] ================================================================================
+2026-04-02 21:30:25 [INFO] Experiment: deep_stdp_mnist
+2026-04-02 21:30:25 [INFO] Encoder: deep_stdp
+2026-04-02 21:30:25 [INFO] Dataset: fashion_mnist
+2026-04-02 21:30:25 [INFO] Seed: 0
+2026-04-02 21:30:25 [INFO] ================================================================================
+2026-04-02 21:30:25 [INFO] 
+[1/5] Loading dataset...
+2026-04-02 21:30:25 [INFO]   Train samples: 60000
+2026-04-02 21:30:25 [INFO]   Test samples: 10000
+2026-04-02 21:30:25 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-04-02 21:30:25 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-04-02 21:30:25 [INFO] 
+[2/5] Initializing encoder...
+2026-04-02 21:30:25 [INFO]   Encoder: DeepSTDPEncoder(trained=False)
+2026-04-02 21:30:25 [INFO] 
+[3/5] Training encoder...
+2026-04-04 14:45:57 [INFO] 
+[4/5] Encoding test data...
+2026-04-04 14:45:57 [INFO]   Running encoder...
+2026-04-04 16:29:37 [INFO]   Codes saved to outputs/codes/deep_stdp/fashion_mnist
+2026-04-04 16:29:37 [INFO]   Pre-code shape: (10000, 200)
+2026-04-04 16:29:37 [INFO]   Code shape: (10000, 200)
+2026-04-04 16:29:37 [INFO]   Code sparsity: 0.950
+2026-04-04 16:29:37 [INFO] 
+[5/5] Evaluating...
+2026-04-04 16:29:37 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-04-04 16:30:17 [INFO]     Clustering results:
+2026-04-04 16:30:17 [INFO]       kmeans:
+2026-04-04 16:30:17 [INFO]         NMI=0.1453, ARI=0.0128, ACC=0.1735
+2026-04-04 16:30:17 [INFO]       spectral:
+2026-04-04 16:30:17 [INFO]         NMI=0.0171, ARI=0.0001, ACC=0.1057
+2026-04-04 16:30:17 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-04-04 16:30:17 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-04-04 16:30:17 [INFO]     Encoding train_data as retrieval database...
+2026-04-05 01:31:03 [INFO]     Retrieval results:
+2026-04-05 01:31:03 [INFO]       map: 0.0124
+2026-04-05 01:31:03 [INFO]       recall@1: 0.0000
+2026-04-05 01:31:03 [INFO]       precision@1: 0.0030
+2026-04-05 01:31:03 [INFO]       ndcg@1: 0.0030
+2026-04-05 01:31:03 [INFO]       recall@10: 0.0003
+2026-04-05 01:31:03 [INFO]       precision@10: 0.0027
+2026-04-05 01:31:03 [INFO]       ndcg@10: 0.0028
+2026-04-05 01:31:03 [INFO]       recall@50: 0.0014
+2026-04-05 01:31:03 [INFO]       precision@50: 0.0029
+2026-04-05 01:31:03 [INFO]       ndcg@50: 0.0029
+2026-04-05 01:31:03 [INFO]       recall@100: 0.0029
+2026-04-05 01:31:03 [INFO]       precision@100: 0.0029
+2026-04-05 01:31:03 [INFO]       ndcg@100: 0.0029
+2026-04-05 01:31:03 [INFO] 
+Results saved to outputs/results/deep_stdp_fashion_mnist_seed0.json
+2026-04-05 01:31:03 [INFO] Model saved to outputs/codes/deep_stdp/fashion_mnist/model_seed0.pkl
+2026-04-05 01:31:03 [INFO] 
+================================================================================
+2026-04-05 01:31:03 [INFO] Experiment complete!
+2026-04-05 01:31:03 [INFO] Full log saved to: outputs/logs/deep_stdp_mnist_seed0_20260402_213025.log
+2026-04-05 01:31:03 [INFO] ================================================================================
