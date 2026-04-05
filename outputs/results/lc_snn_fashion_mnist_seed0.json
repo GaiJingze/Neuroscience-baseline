@@ -1,0 +1,85 @@
+{
+  "config": {
+    "experiment_name": "lc_snn_mnist",
+    "seed": 0,
+    "output_dir": "./outputs",
+    "dataset": "fashion_mnist",
+    "data_root": "./data",
+    "encoder": "lc_snn",
+    "encoder_config": {
+      "input_dim": 784,
+      "image_side": 28,
+      "patch_size": 14,
+      "patch_stride": 14,
+      "neurons_per_patch": 100,
+      "simulation_time": 350,
+      "dt": 1.0,
+      "thresh": -52.0,
+      "rest": -65.0,
+      "refrac": 5,
+      "intensity": 128.0,
+      "nu": [
+        0.0001,
+        0.01
+      ],
+      "n_train_samples": null,
+      "binarization_percent": 0.05,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans",
+      "kmedoids",
+      "spectral"
+    ],
+    "device": "cuda",
+    "verbose": true,
+    "save_codes": true,
+    "save_model": true
+  },
+  "dataset_info": {
+    "name": "fashion_mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.2694936877735443,
+      "ari": 0.1210794202539709,
+      "acc": 0.3371,
+      "purity": 0.3706,
+      "silhouette": 0.39527498238275566,
+      "davies_bouldin": 3.220697916458873
+    },
+    "spectral": {
+      "nmi": 0.07703440373411295,
+      "ari": 0.003750907649654514,
+      "acc": 0.1209,
+      "purity": 0.1438,
+      "silhouette": 0.10990296416141541,
+      "davies_bouldin": 5.274763358790033
+    }
+  },
+  "retrieval": {
+    "map": 0.025815416339284775,
+    "recall@1": 6.8e-05,
+    "precision@1": 0.0068,
+    "ndcg@1": 0.0068,
+    "recall@10": 0.000741,
+    "precision@10": 0.007410000000000001,
+    "ndcg@10": 0.007335809788849588,
+    "recall@50": 0.0034620000000000007,
+    "precision@50": 0.006924000000000001,
+    "ndcg@50": 0.006983745292304169,
+    "recall@100": 0.006892000000000001,
+    "precision@100": 0.006892000000000001,
+    "ndcg@100": 0.006936750265076404
+  }
+}

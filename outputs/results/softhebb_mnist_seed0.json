@@ -1,0 +1,72 @@
+{
+  "config": {
+    "experiment_name": "softhebb_mnist",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "softhebb",
+    "encoder_config": {
+      "input_dim": 784,
+      "hidden_dims": [
+        1000,
+        500
+      ],
+      "output_dim": 400,
+      "t_invert": 5.0,
+      "eta": 0.01,
+      "n_epochs": 10,
+      "batch_size": 128,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans"
+    ],
+    "retrieval_k_values": [
+      1,
+      10,
+      50,
+      100
+    ],
+    "output_dir": "./outputs",
+    "save_codes": true,
+    "save_model": true,
+    "seed": 0
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.949999988079071
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.001573738237033426,
+      "ari": -2.7689957893665e-05,
+      "acc": 0.113,
+      "purity": 0.1136,
+      "silhouette": 0.9998999834060669,
+      "davies_bouldin": 0.0
+    }
+  },
+  "retrieval": {
+    "map": 0.007334158167968323,
+    "recall@1": 1.2e-05,
+    "precision@1": 0.0012,
+    "ndcg@1": 0.0012,
+    "recall@10": 0.00014,
+    "precision@10": 0.0014,
+    "ndcg@10": 0.0013992484751264834,
+    "recall@50": 0.0008060000000000001,
+    "precision@50": 0.0016120000000000002,
+    "ndcg@50": 0.001563995859637848,
+    "recall@100": 0.0016530000000000002,
+    "precision@100": 0.0016530000000000002,
+    "ndcg@100": 0.0016154484956719599
+  }
+}

@@ -1,0 +1,58 @@
+2026-03-22 23:53:57 [INFO] ================================================================================
+2026-03-22 23:53:57 [INFO] Experiment: biohash_mnist
+2026-03-22 23:53:57 [INFO] Encoder: biohash
+2026-03-22 23:53:57 [INFO] Dataset: mnist
+2026-03-22 23:53:57 [INFO] Seed: 0
+2026-03-22 23:53:57 [INFO] ================================================================================
+2026-03-22 23:53:57 [INFO] 
+[1/5] Loading dataset...
+2026-03-22 23:53:57 [INFO]   Train samples: 60000
+2026-03-22 23:53:57 [INFO]   Test samples: 10000
+2026-03-22 23:53:57 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-22 23:53:57 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-22 23:53:57 [INFO] 
+[2/5] Initializing encoder...
+2026-03-22 23:53:57 [INFO]   Encoder: BioHashEncoder(trained=False)
+2026-03-22 23:53:57 [INFO] 
+[3/5] Training encoder...
+2026-03-22 23:55:28 [INFO] 
+[4/5] Encoding test data...
+2026-03-22 23:55:28 [INFO]   Running encoder...
+2026-03-22 23:55:28 [INFO]   Codes saved to outputs/codes/biohash/mnist
+2026-03-22 23:55:28 [INFO]   Pre-code shape: (10000, 256)
+2026-03-22 23:55:28 [INFO]   Code shape: (10000, 256)
+2026-03-22 23:55:28 [INFO]   Code sparsity: 0.949
+2026-03-22 23:55:28 [INFO] 
+[5/5] Evaluating...
+2026-03-22 23:55:28 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-22 23:55:30 [INFO]     Clustering results:
+2026-03-22 23:55:30 [INFO]       kmeans:
+2026-03-22 23:55:30 [INFO]         NMI=0.3034, ARI=0.2020, ACC=0.3878
+2026-03-22 23:55:30 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-22 23:55:30 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-22 23:55:30 [INFO]     Encoding train_data as retrieval database...
+2026-03-22 23:57:11 [INFO]     Retrieval results:
+2026-03-22 23:57:11 [INFO]       map: 0.0337
+2026-03-22 23:57:11 [INFO]       recall@1: 0.0001
+2026-03-22 23:57:11 [INFO]       precision@1: 0.0107
+2026-03-22 23:57:11 [INFO]       ndcg@1: 0.0107
+2026-03-22 23:57:11 [INFO]       recall@10: 0.0010
+2026-03-22 23:57:11 [INFO]       precision@10: 0.0096
+2026-03-22 23:57:11 [INFO]       ndcg@10: 0.0097
+2026-03-22 23:57:11 [INFO]       recall@50: 0.0044
+2026-03-22 23:57:11 [INFO]       precision@50: 0.0088
+2026-03-22 23:57:11 [INFO]       ndcg@50: 0.0091
+2026-03-22 23:57:11 [INFO]       recall@100: 0.0084
+2026-03-22 23:57:11 [INFO]       precision@100: 0.0084
+2026-03-22 23:57:11 [INFO]       ndcg@100: 0.0086
+2026-03-22 23:57:11 [INFO] 
+Results saved to outputs/results/biohash_mnist_seed0.json
+2026-03-22 23:57:11 [INFO] Model saved to outputs/codes/biohash/mnist/model_seed0.pkl
+2026-03-22 23:57:11 [INFO] 
+================================================================================
+2026-03-22 23:57:11 [INFO] Experiment complete!
+2026-03-22 23:57:11 [INFO] Full log saved to: outputs/logs/biohash_mnist_seed0_20260322_235357.log
+2026-03-22 23:57:11 [INFO] ================================================================================

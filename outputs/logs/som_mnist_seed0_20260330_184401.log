@@ -1,0 +1,58 @@
+2026-03-30 18:44:01 [INFO] ================================================================================
+2026-03-30 18:44:01 [INFO] Experiment: som_mnist
+2026-03-30 18:44:01 [INFO] Encoder: som
+2026-03-30 18:44:01 [INFO] Dataset: fashion_mnist
+2026-03-30 18:44:01 [INFO] Seed: 0
+2026-03-30 18:44:01 [INFO] ================================================================================
+2026-03-30 18:44:01 [INFO] 
+[1/5] Loading dataset...
+2026-03-30 18:44:02 [INFO]   Train samples: 60000
+2026-03-30 18:44:02 [INFO]   Test samples: 10000
+2026-03-30 18:44:02 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-30 18:44:02 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-30 18:44:02 [INFO] 
+[2/5] Initializing encoder...
+2026-03-30 18:44:02 [INFO]   Encoder: SOMEncoder(trained=False)
+2026-03-30 18:44:02 [INFO] 
+[3/5] Training encoder...
+2026-03-30 18:47:46 [INFO] 
+[4/5] Encoding test data...
+2026-03-30 18:47:46 [INFO]   Running encoder...
+2026-03-30 18:47:51 [INFO]   Codes saved to outputs/codes/som/fashion_mnist
+2026-03-30 18:47:51 [INFO]   Pre-code shape: (10000, 400)
+2026-03-30 18:47:51 [INFO]   Code shape: (10000, 400)
+2026-03-30 18:47:51 [INFO]   Code sparsity: 0.950
+2026-03-30 18:47:51 [INFO] 
+[5/5] Evaluating...
+2026-03-30 18:47:51 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-30 18:47:54 [INFO]     Clustering results:
+2026-03-30 18:47:54 [INFO]       kmeans:
+2026-03-30 18:47:54 [INFO]         NMI=0.5421, ARI=0.3706, ACC=0.5513
+2026-03-30 18:47:54 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-30 18:47:54 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-30 18:47:54 [INFO]     Encoding train_data as retrieval database...
+2026-03-30 18:51:00 [INFO]     Retrieval results:
+2026-03-30 18:51:00 [INFO]       map: 0.0377
+2026-03-30 18:51:00 [INFO]       recall@1: 0.0001
+2026-03-30 18:51:00 [INFO]       precision@1: 0.0109
+2026-03-30 18:51:00 [INFO]       ndcg@1: 0.0109
+2026-03-30 18:51:00 [INFO]       recall@10: 0.0011
+2026-03-30 18:51:00 [INFO]       precision@10: 0.0114
+2026-03-30 18:51:00 [INFO]       ndcg@10: 0.0113
+2026-03-30 18:51:00 [INFO]       recall@50: 0.0055
+2026-03-30 18:51:00 [INFO]       precision@50: 0.0111
+2026-03-30 18:51:00 [INFO]       ndcg@50: 0.0111
+2026-03-30 18:51:00 [INFO]       recall@100: 0.0108
+2026-03-30 18:51:00 [INFO]       precision@100: 0.0108
+2026-03-30 18:51:00 [INFO]       ndcg@100: 0.0109
+2026-03-30 18:51:00 [INFO] 
+Results saved to outputs/results/som_fashion_mnist_seed0.json
+2026-03-30 18:51:00 [INFO] Model saved to outputs/codes/som/fashion_mnist/model_seed0.pkl
+2026-03-30 18:51:00 [INFO] 
+================================================================================
+2026-03-30 18:51:00 [INFO] Experiment complete!
+2026-03-30 18:51:00 [INFO] Full log saved to: outputs/logs/som_mnist_seed0_20260330_184401.log
+2026-03-30 18:51:00 [INFO] ================================================================================

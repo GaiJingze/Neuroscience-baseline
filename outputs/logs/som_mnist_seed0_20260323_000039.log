@@ -1,0 +1,58 @@
+2026-03-23 00:00:39 [INFO] ================================================================================
+2026-03-23 00:00:39 [INFO] Experiment: som_mnist
+2026-03-23 00:00:39 [INFO] Encoder: som
+2026-03-23 00:00:39 [INFO] Dataset: mnist
+2026-03-23 00:00:39 [INFO] Seed: 0
+2026-03-23 00:00:39 [INFO] ================================================================================
+2026-03-23 00:00:39 [INFO] 
+[1/5] Loading dataset...
+2026-03-23 00:00:40 [INFO]   Train samples: 60000
+2026-03-23 00:00:40 [INFO]   Test samples: 10000
+2026-03-23 00:00:40 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-23 00:00:40 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-23 00:00:40 [INFO] 
+[2/5] Initializing encoder...
+2026-03-23 00:00:40 [INFO]   Encoder: SOMEncoder(trained=False)
+2026-03-23 00:00:40 [INFO] 
+[3/5] Training encoder...
+2026-03-23 00:04:21 [INFO] 
+[4/5] Encoding test data...
+2026-03-23 00:04:21 [INFO]   Running encoder...
+2026-03-23 00:04:26 [INFO]   Codes saved to outputs/codes/som/mnist
+2026-03-23 00:04:26 [INFO]   Pre-code shape: (10000, 400)
+2026-03-23 00:04:26 [INFO]   Code shape: (10000, 400)
+2026-03-23 00:04:26 [INFO]   Code sparsity: 0.950
+2026-03-23 00:04:26 [INFO] 
+[5/5] Evaluating...
+2026-03-23 00:04:26 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-23 00:04:28 [INFO]     Clustering results:
+2026-03-23 00:04:28 [INFO]       kmeans:
+2026-03-23 00:04:28 [INFO]         NMI=0.6341, ARI=0.5215, ACC=0.6528
+2026-03-23 00:04:28 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-23 00:04:28 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-23 00:04:28 [INFO]     Encoding train_data as retrieval database...
+2026-03-23 00:07:36 [INFO]     Retrieval results:
+2026-03-23 00:07:36 [INFO]       map: 0.0426
+2026-03-23 00:07:36 [INFO]       recall@1: 0.0001
+2026-03-23 00:07:36 [INFO]       precision@1: 0.0125
+2026-03-23 00:07:36 [INFO]       ndcg@1: 0.0125
+2026-03-23 00:07:36 [INFO]       recall@10: 0.0014
+2026-03-23 00:07:36 [INFO]       precision@10: 0.0137
+2026-03-23 00:07:36 [INFO]       ndcg@10: 0.0134
+2026-03-23 00:07:36 [INFO]       recall@50: 0.0069
+2026-03-23 00:07:36 [INFO]       precision@50: 0.0139
+2026-03-23 00:07:36 [INFO]       ndcg@50: 0.0138
+2026-03-23 00:07:36 [INFO]       recall@100: 0.0136
+2026-03-23 00:07:36 [INFO]       precision@100: 0.0136
+2026-03-23 00:07:36 [INFO]       ndcg@100: 0.0136
+2026-03-23 00:07:36 [INFO] 
+Results saved to outputs/results/som_mnist_seed0.json
+2026-03-23 00:07:36 [INFO] Model saved to outputs/codes/som/mnist/model_seed0.pkl
+2026-03-23 00:07:36 [INFO] 
+================================================================================
+2026-03-23 00:07:36 [INFO] Experiment complete!
+2026-03-23 00:07:36 [INFO] Full log saved to: outputs/logs/som_mnist_seed0_20260323_000039.log
+2026-03-23 00:07:36 [INFO] ================================================================================

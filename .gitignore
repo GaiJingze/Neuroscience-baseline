@@ -56,8 +56,8 @@ outputs/codes/**/*.pth
 !outputs/benchmark/
 !outputs/logs/
 
-# Experiment results
-results/
+# Experiment results (root-level only; keep outputs/results/ for tracked benchmarks)
+/results/
 logs/
 !outputs/logs/
 wandb/

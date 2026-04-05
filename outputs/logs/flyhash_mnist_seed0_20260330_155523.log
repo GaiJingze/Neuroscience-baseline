@@ -1,0 +1,58 @@
+2026-03-30 15:55:23 [INFO] ================================================================================
+2026-03-30 15:55:23 [INFO] Experiment: flyhash_mnist
+2026-03-30 15:55:23 [INFO] Encoder: flyhash
+2026-03-30 15:55:23 [INFO] Dataset: fashion_mnist
+2026-03-30 15:55:23 [INFO] Seed: 0
+2026-03-30 15:55:23 [INFO] ================================================================================
+2026-03-30 15:55:23 [INFO] 
+[1/5] Loading dataset...
+2026-03-30 15:55:34 [INFO]   Train samples: 60000
+2026-03-30 15:55:34 [INFO]   Test samples: 10000
+2026-03-30 15:55:34 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-30 15:55:34 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-30 15:55:34 [INFO] 
+[2/5] Initializing encoder...
+2026-03-30 15:55:34 [INFO]   Encoder: FlyHashEncoder(trained=False)
+2026-03-30 15:55:34 [INFO] 
+[3/5] Training encoder...
+2026-03-30 15:55:34 [INFO] 
+[4/5] Encoding test data...
+2026-03-30 15:55:34 [INFO]   Running encoder...
+2026-03-30 15:55:35 [INFO]   Codes saved to outputs/codes/flyhash/fashion_mnist
+2026-03-30 15:55:35 [INFO]   Pre-code shape: (10000, 2000)
+2026-03-30 15:55:35 [INFO]   Code shape: (10000, 2000)
+2026-03-30 15:55:35 [INFO]   Code sparsity: 0.950
+2026-03-30 15:55:35 [INFO] 
+[5/5] Evaluating...
+2026-03-30 15:55:35 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-30 15:55:42 [INFO]     Clustering results:
+2026-03-30 15:55:42 [INFO]       kmeans:
+2026-03-30 15:55:42 [INFO]         NMI=0.5925, ARI=0.4295, ACC=0.5731
+2026-03-30 15:55:42 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-30 15:55:42 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-30 15:55:42 [INFO]     Encoding train_data as retrieval database...
+2026-03-30 16:14:47 [INFO]     Retrieval results:
+2026-03-30 16:14:47 [INFO]       map: 0.0435
+2026-03-30 16:14:47 [INFO]       recall@1: 0.0002
+2026-03-30 16:14:47 [INFO]       precision@1: 0.0154
+2026-03-30 16:14:47 [INFO]       ndcg@1: 0.0154
+2026-03-30 16:14:47 [INFO]       recall@10: 0.0013
+2026-03-30 16:14:47 [INFO]       precision@10: 0.0130
+2026-03-30 16:14:47 [INFO]       ndcg@10: 0.0135
+2026-03-30 16:14:47 [INFO]       recall@50: 0.0062
+2026-03-30 16:14:47 [INFO]       precision@50: 0.0123
+2026-03-30 16:14:47 [INFO]       ndcg@50: 0.0126
+2026-03-30 16:14:47 [INFO]       recall@100: 0.0120
+2026-03-30 16:14:47 [INFO]       precision@100: 0.0120
+2026-03-30 16:14:47 [INFO]       ndcg@100: 0.0123
+2026-03-30 16:14:47 [INFO] 
+Results saved to outputs/results/flyhash_fashion_mnist_seed0.json
+2026-03-30 16:14:47 [INFO] Model saved to outputs/codes/flyhash/fashion_mnist/model_seed0.pkl
+2026-03-30 16:14:47 [INFO] 
+================================================================================
+2026-03-30 16:14:47 [INFO] Experiment complete!
+2026-03-30 16:14:47 [INFO] Full log saved to: outputs/logs/flyhash_mnist_seed0_20260330_155523.log
+2026-03-30 16:14:47 [INFO] ================================================================================

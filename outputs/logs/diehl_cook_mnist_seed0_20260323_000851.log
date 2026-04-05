@@ -1,0 +1,60 @@
+2026-03-23 00:08:51 [INFO] ================================================================================
+2026-03-23 00:08:51 [INFO] Experiment: diehl_cook_mnist
+2026-03-23 00:08:51 [INFO] Encoder: diehl_cook
+2026-03-23 00:08:51 [INFO] Dataset: mnist
+2026-03-23 00:08:51 [INFO] Seed: 0
+2026-03-23 00:08:51 [INFO] ================================================================================
+2026-03-23 00:08:51 [INFO] 
+[1/5] Loading dataset...
+2026-03-23 00:08:51 [INFO]   Train samples: 60000
+2026-03-23 00:08:51 [INFO]   Test samples: 10000
+2026-03-23 00:08:51 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-23 00:08:51 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-23 00:08:51 [INFO] 
+[2/5] Initializing encoder...
+2026-03-23 00:08:51 [INFO]   Encoder: DiehlCookEncoder(trained=False)
+2026-03-23 00:08:51 [INFO] 
+[3/5] Training encoder...
+2026-03-23 07:09:50 [INFO] 
+[4/5] Encoding test data...
+2026-03-23 07:09:50 [INFO]   Running encoder...
+2026-03-23 07:53:35 [INFO]   Codes saved to outputs/codes/diehl_cook/mnist
+2026-03-23 07:53:35 [INFO]   Pre-code shape: (10000, 400)
+2026-03-23 07:53:35 [INFO]   Code shape: (10000, 400)
+2026-03-23 07:53:35 [INFO]   Code sparsity: 0.950
+2026-03-23 07:53:35 [INFO] 
+[5/5] Evaluating...
+2026-03-23 07:53:35 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-23 07:54:51 [INFO]     Clustering results:
+2026-03-23 07:54:51 [INFO]       kmeans:
+2026-03-23 07:54:51 [INFO]         NMI=0.4759, ARI=0.3781, ACC=0.5439
+2026-03-23 07:54:51 [INFO]       spectral:
+2026-03-23 07:54:51 [INFO]         NMI=0.3152, ARI=0.0765, ACC=0.2628
+2026-03-23 07:54:51 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-23 07:54:51 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-23 07:54:51 [INFO]     Encoding train_data as retrieval database...
+2026-03-23 12:52:41 [INFO]     Retrieval results:
+2026-03-23 12:52:41 [INFO]       map: 0.0385
+2026-03-23 12:52:41 [INFO]       recall@1: 0.0001
+2026-03-23 12:52:41 [INFO]       precision@1: 0.0128
+2026-03-23 12:52:41 [INFO]       ndcg@1: 0.0128
+2026-03-23 12:52:41 [INFO]       recall@10: 0.0012
+2026-03-23 12:52:41 [INFO]       precision@10: 0.0116
+2026-03-23 12:52:41 [INFO]       ndcg@10: 0.0118
+2026-03-23 12:52:41 [INFO]       recall@50: 0.0057
+2026-03-23 12:52:41 [INFO]       precision@50: 0.0114
+2026-03-23 12:52:41 [INFO]       ndcg@50: 0.0115
+2026-03-23 12:52:41 [INFO]       recall@100: 0.0113
+2026-03-23 12:52:41 [INFO]       precision@100: 0.0113
+2026-03-23 12:52:41 [INFO]       ndcg@100: 0.0114
+2026-03-23 12:52:41 [INFO] 
+Results saved to outputs/results/diehl_cook_mnist_seed0.json
+2026-03-23 12:52:41 [INFO] Model saved to outputs/codes/diehl_cook/mnist/model_seed0.pkl
+2026-03-23 12:52:41 [INFO] 
+================================================================================
+2026-03-23 12:52:41 [INFO] Experiment complete!
+2026-03-23 12:52:41 [INFO] Full log saved to: outputs/logs/diehl_cook_mnist_seed0_20260323_000851.log
+2026-03-23 12:52:41 [INFO] ================================================================================

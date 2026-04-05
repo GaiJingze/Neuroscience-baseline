@@ -1,0 +1,60 @@
+2026-03-23 12:52:45 [INFO] ================================================================================
+2026-03-23 12:52:45 [INFO] Experiment: lm_snn_mnist
+2026-03-23 12:52:45 [INFO] Encoder: lm_snn
+2026-03-23 12:52:45 [INFO] Dataset: mnist
+2026-03-23 12:52:45 [INFO] Seed: 0
+2026-03-23 12:52:45 [INFO] ================================================================================
+2026-03-23 12:52:45 [INFO] 
+[1/5] Loading dataset...
+2026-03-23 12:52:46 [INFO]   Train samples: 60000
+2026-03-23 12:52:46 [INFO]   Test samples: 10000
+2026-03-23 12:52:46 [INFO] 
+  Eval modes: clustering=True, retrieval=True
+2026-03-23 12:52:46 [INFO]   Has labels: True, Has query_data: False, Has groundtruth: False
+2026-03-23 12:52:46 [INFO] 
+[2/5] Initializing encoder...
+2026-03-23 12:52:46 [INFO]   Encoder: LMSNNEncoder(trained=False)
+2026-03-23 12:52:46 [INFO] 
+[3/5] Training encoder...
+2026-03-23 20:57:30 [INFO] 
+[4/5] Encoding test data...
+2026-03-23 20:57:30 [INFO]   Running encoder...
+2026-03-23 21:44:02 [INFO]   Codes saved to outputs/codes/lm_snn/mnist
+2026-03-23 21:44:02 [INFO]   Pre-code shape: (10000, 400)
+2026-03-23 21:44:02 [INFO]   Code shape: (10000, 400)
+2026-03-23 21:44:02 [INFO]   Code sparsity: 0.950
+2026-03-23 21:44:02 [INFO] 
+[5/5] Evaluating...
+2026-03-23 21:44:02 [INFO] 
+  Running clustering evaluation (ACC / NMI)...
+2026-03-23 21:45:23 [INFO]     Clustering results:
+2026-03-23 21:45:23 [INFO]       kmeans:
+2026-03-23 21:45:23 [INFO]         NMI=0.3802, ARI=0.2876, ACC=0.4813
+2026-03-23 21:45:23 [INFO]       spectral:
+2026-03-23 21:45:23 [INFO]         NMI=0.2477, ARI=0.0582, ACC=0.2128
+2026-03-23 21:45:23 [INFO] 
+  Running retrieval evaluation (mAP / Recall@K)...
+2026-03-23 21:45:23 [INFO]     Mode: label-based retrieval (database=train, queries=test)
+2026-03-23 21:45:23 [INFO]     Encoding train_data as retrieval database...
+2026-03-24 02:26:19 [INFO]     Retrieval results:
+2026-03-24 02:26:19 [INFO]       map: 0.0334
+2026-03-24 02:26:19 [INFO]       recall@1: 0.0001
+2026-03-24 02:26:19 [INFO]       precision@1: 0.0117
+2026-03-24 02:26:19 [INFO]       ndcg@1: 0.0117
+2026-03-24 02:26:19 [INFO]       recall@10: 0.0010
+2026-03-24 02:26:19 [INFO]       precision@10: 0.0097
+2026-03-24 02:26:19 [INFO]       ndcg@10: 0.0100
+2026-03-24 02:26:19 [INFO]       recall@50: 0.0045
+2026-03-24 02:26:19 [INFO]       precision@50: 0.0090
+2026-03-24 02:26:19 [INFO]       ndcg@50: 0.0092
+2026-03-24 02:26:19 [INFO]       recall@100: 0.0089
+2026-03-24 02:26:19 [INFO]       precision@100: 0.0089
+2026-03-24 02:26:19 [INFO]       ndcg@100: 0.0090
+2026-03-24 02:26:19 [INFO] 
+Results saved to outputs/results/lm_snn_mnist_seed0.json
+2026-03-24 02:26:19 [INFO] Model saved to outputs/codes/lm_snn/mnist/model_seed0.pkl
+2026-03-24 02:26:19 [INFO] 
+================================================================================
+2026-03-24 02:26:19 [INFO] Experiment complete!
+2026-03-24 02:26:19 [INFO] Full log saved to: outputs/logs/lm_snn_mnist_seed0_20260323_125245.log
+2026-03-24 02:26:19 [INFO] ================================================================================

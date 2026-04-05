@@ -1,0 +1,82 @@
+{
+  "config": {
+    "experiment_name": "diehl_cook_mnist",
+    "seed": 0,
+    "output_dir": "./outputs",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "diehl_cook",
+    "encoder_config": {
+      "input_dim": 784,
+      "n_neurons": 400,
+      "simulation_time": 350,
+      "dt": 1.0,
+      "thresh": -52.0,
+      "rest": -65.0,
+      "refrac": 5,
+      "intensity": 128.0,
+      "nu": [
+        0.0001,
+        0.01
+      ],
+      "n_train_samples": null,
+      "binarization_percent": 0.05,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans",
+      "kmedoids",
+      "spectral"
+    ],
+    "device": "cuda",
+    "verbose": true,
+    "save_codes": true,
+    "save_model": true
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.4759054808293723,
+      "ari": 0.37810767751021784,
+      "acc": 0.5439,
+      "purity": 0.5839,
+      "silhouette": 0.11586605465946688,
+      "davies_bouldin": 2.8918604498452956
+    },
+    "spectral": {
+      "nmi": 0.3151779594118439,
+      "ari": 0.07645767231570604,
+      "acc": 0.2628,
+      "purity": 0.3351,
+      "silhouette": 0.034627515549698215,
+      "davies_bouldin": 8.40912039146305
+    }
+  },
+  "retrieval": {
+    "map": 0.038546700154128956,
+    "recall@1": 0.00012800000000000002,
+    "precision@1": 0.0128,
+    "ndcg@1": 0.0128,
+    "recall@10": 0.0011560000000000001,
+    "precision@10": 0.011559999999999999,
+    "ndcg@10": 0.0117726550224232,
+    "recall@50": 0.00569,
+    "precision@50": 0.01138,
+    "ndcg@50": 0.011513504450324154,
+    "recall@100": 0.011258,
+    "precision@100": 0.011258,
+    "ndcg@100": 0.011366556276275053
+  }
+}

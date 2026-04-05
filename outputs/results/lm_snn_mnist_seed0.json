@@ -1,0 +1,85 @@
+{
+  "config": {
+    "experiment_name": "lm_snn_mnist",
+    "seed": 0,
+    "output_dir": "./outputs",
+    "dataset": "mnist",
+    "data_root": "./data",
+    "encoder": "lm_snn",
+    "encoder_config": {
+      "input_dim": 784,
+      "n_neurons": 400,
+      "grid_side": 20,
+      "simulation_time": 350,
+      "dt": 1.0,
+      "thresh": -52.0,
+      "rest": -65.0,
+      "refrac": 5,
+      "intensity": 128.0,
+      "nu": [
+        0.0001,
+        0.01
+      ],
+      "inh_sigma": 5.0,
+      "inh_strength": -17.5,
+      "n_train_samples": null,
+      "binarization_percent": 0.05,
+      "device": "cuda"
+    },
+    "binarization_method": "none",
+    "eval_clustering": true,
+    "eval_retrieval": true,
+    "n_clusters": 10,
+    "clustering_methods": [
+      "kmeans",
+      "kmedoids",
+      "spectral"
+    ],
+    "device": "cuda",
+    "verbose": true,
+    "save_codes": true,
+    "save_model": true
+  },
+  "dataset_info": {
+    "name": "mnist",
+    "n_train": 60000,
+    "n_test": 10000
+  },
+  "code_stats": {
+    "code_dim": 400,
+    "sparsity": 0.95
+  },
+  "clustering": {
+    "kmeans": {
+      "nmi": 0.3802055036605247,
+      "ari": 0.2876260424944637,
+      "acc": 0.4813,
+      "purity": 0.5099,
+      "silhouette": 0.21827748266305913,
+      "davies_bouldin": 2.625484129796612
+    },
+    "spectral": {
+      "nmi": 0.2477299982960174,
+      "ari": 0.05824690211196599,
+      "acc": 0.2128,
+      "purity": 0.2715,
+      "silhouette": 0.06413307518616627,
+      "davies_bouldin": 7.019712851663181
+    }
+  },
+  "retrieval": {
+    "map": 0.03342459187279097,
+    "recall@1": 0.00011700000000000001,
+    "precision@1": 0.0117,
+    "ndcg@1": 0.0117,
+    "recall@10": 0.0009690000000000001,
+    "precision@10": 0.00969,
+    "ndcg@10": 0.009980801451927573,
+    "recall@50": 0.004483000000000001,
+    "precision@50": 0.008966000000000002,
+    "ndcg@50": 0.009213819550958116,
+    "recall@100": 0.008851,
+    "precision@100": 0.008851,
+    "ndcg@100": 0.009034142759691877
+  }
+}
